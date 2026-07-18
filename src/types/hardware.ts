@@ -88,6 +88,52 @@ export interface BatteryInfo {
   estimated_minutes: number | null;
 }
 
+// ─── Spec checker types ───────────────────────────────────────────────────────
+
+export interface SpecRequirement {
+  cpu?: string;
+  cpu_cores?: number;
+  cpu_clock_ghz?: number;
+  gpu?: string;
+  vram_gb?: number;
+  allow_integrated_gpu?: boolean;
+  ram_gb?: number;
+  storage_gb?: number;
+  notes?: string;
+}
+
+export interface AppRequirement {
+  id: string;
+  name: string;
+  kind: "game" | "program";
+  tags: string[];
+  source?: string;
+  minimum: SpecRequirement;
+  recommended?: SpecRequirement;
+}
+
+export type JudgmentLevel = "met" | "borderline" | "unmet" | "unknown";
+export type ConfidenceLevel = "high" | "medium" | "low";
+
+export interface ComponentJudgment {
+  level: JudgmentLevel;
+  confidence: ConfidenceLevel;
+  reason: string;
+}
+
+export interface SpecCheckResult {
+  app: AppRequirement;
+  tier: "minimum" | "recommended";
+  overall: JudgmentLevel;
+  confidence: ConfidenceLevel;
+  components: {
+    gpu: ComponentJudgment;
+    cpu: ComponentJudgment;
+    ram: ComponentJudgment;
+    storage: ComponentJudgment;
+  };
+}
+
 export interface HardwareInfo {
   cpu: CpuInfo | null;
   gpus: GpuInfo[];

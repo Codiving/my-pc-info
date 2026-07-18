@@ -3,6 +3,7 @@ import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop } from "lucide-r
 import { HardwareCard } from "./components/HardwareCard";
 import { StorageCard } from "./components/StorageCard";
 import { AlertsSection } from "./components/AlertsSection";
+import { SpecChecker } from "./components/SpecChecker";
 import { DetailPanel } from "./components/DetailPanel";
 import { useHardwareInfo } from "./hooks/useHardwareInfo";
 import type { HardwareInfo } from "./types/hardware";
@@ -173,6 +174,8 @@ export default function App() {
             <StorageCard drives={data.drives} />
 
             <AlertsSection data={data} />
+
+            <SpecChecker data={data} />
 
             <DetailPanel data={data} />
           </>
