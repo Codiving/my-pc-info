@@ -509,65 +509,14 @@ mod platform {
     }
 }
 
-// ─── Non-Windows stub (dev preview with dummy data) ───────────────────────────
+// ─── Non-Windows stub ────────────────────────────────────────────────────────
 
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use super::*;
 
     pub fn get_hardware_info() -> Result<HardwareInfo, String> {
-        Ok(HardwareInfo {
-            computer_name: "MY-GAMING-PC".into(),
-            is_laptop: false,
-            cpu: Some(CpuInfo {
-                name: "Intel Core i7-12700K".into(),
-                manufacturer: "Intel".into(),
-                cores: 12, threads: 20,
-                base_clock_mhz: 3600, max_clock_mhz: 5000,
-                usage_percent: 23,
-                architecture: "x64".into(),
-                virtualization: true,
-            }),
-            gpus: vec![GpuInfo {
-                name: "NVIDIA GeForce RTX 4070".into(),
-                vram_gb: Some(12.0),
-                manufacturer: "NVIDIA".into(),
-                driver_version: "546.33".into(),
-                resolution: "2560×1440".into(),
-                refresh_rate: 144,
-                is_integrated: false,
-            }],
-            ram: Some(RamInfo {
-                total_gb: 32.0, available_gb: 14.8, used_gb: 17.2,
-                usage_percent: 54,
-                memory_type: "DDR5".into(), speed_mhz: 5600,
-                slots_used: 2,
-                slots: vec![
-                    RamSlotInfo { slot: "DIMM_A1".into(), capacity_gb: 16.0, speed_mhz: 5600, memory_type: "DDR5".into(), manufacturer: "Samsung".into() },
-                    RamSlotInfo { slot: "DIMM_B1".into(), capacity_gb: 16.0, speed_mhz: 5600, memory_type: "DDR5".into(), manufacturer: "Samsung".into() },
-                ],
-            }),
-            drives: vec![
-                DriveInfo { letter: "C:".into(), label: "Windows".into(), total_gb: 953.0, free_gb: 312.0, used_percent: 67, drive_type: "NVMe SSD".into(), model: "Samsung SSD 980 PRO 1TB".into(), interface_type: "NVMe".into(), is_boot: true, file_system: "NTFS".into() },
-                DriveInfo { letter: "D:".into(), label: "데이터".into(), total_gb: 1863.0, free_gb: 940.0, used_percent: 50, drive_type: "HDD".into(), model: "Seagate Barracuda 2TB".into(), interface_type: "SATA".into(), is_boot: false, file_system: "NTFS".into() },
-            ],
-            motherboard: Some(MotherboardInfo {
-                manufacturer: "ASUS".into(), model: "ROG STRIX Z690-F GAMING WIFI".into(),
-                bios_version: "2802".into(), bios_date: "2023-08-21".into(),
-            }),
-            os: Some(OsInfo {
-                name: "Windows 11 Pro".into(), version: "10.0.22631".into(),
-                build: "22631".into(), architecture: "64비트".into(),
-                install_date: "2023-05-15 14:30".into(),
-                last_boot: "2026-07-18 08:22".into(),
-                uptime_hours: 14,
-            }),
-            network: vec![
-                NetworkInfo { name: "Intel Wi-Fi 6E AX211".into(), connection_name: "Wi-Fi".into(), is_connected: true, ip_address: "192.168.0.105".into(), mac_address: "A0:B1:C2:D3:E4:F5".into(), speed_mbps: Some(574), adapter_type: "Wi-Fi".into() },
-                NetworkInfo { name: "Intel Ethernet Connection I225-V".into(), connection_name: "이더넷".into(), is_connected: false, ip_address: String::new(), mac_address: "00:11:22:33:44:55".into(), speed_mbps: Some(1000), adapter_type: "이더넷".into() },
-            ],
-            battery: None,
-        })
+        Err("WINDOWS_ONLY".into())
     }
 }
 
