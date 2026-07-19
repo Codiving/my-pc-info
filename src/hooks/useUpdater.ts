@@ -4,14 +4,24 @@ import { relaunch } from "@tauri-apps/plugin-process";
 
 export function useUpdater() {
   const [update, setUpdate] = useState<Update | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      check().then(u => setUpdate(u ?? null)).catch(() => {});
+      check().then(u => {
+        if (u) {
+          setUpdate(u);
+          setShowModal(true);
+        }
+      }).catch(() => {});
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  const dismiss = () => setShowModal(false);
+
+  const openModal = () => setShowModal(true);
 
   const install = async () => {
     if (!update || installing) return;
@@ -24,5 +34,5 @@ export function useUpdater() {
     }
   };
 
-  return { update, installing, install };
+  return { update, showModal, installing, dismiss, openModal, install };
 }

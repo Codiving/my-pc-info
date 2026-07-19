@@ -80,7 +80,7 @@ function OsBar({ data }: { data: HardwareInfo }) {
 
 export default function App() {
   const { data, loading, error, refresh, copyToClipboard, copied } = useHardwareInfo();
-  const { update, installing, install } = useUpdater();
+  const { update, showModal, installing, dismiss, openModal, install } = useUpdater();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"specs" | "checker">("specs");
 
@@ -115,13 +115,12 @@ export default function App() {
           <div className="flex gap-2.5">
             {update && (
               <button
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-green text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-white/[4%] disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]"
-                onClick={install}
-                disabled={installing}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-green text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-white/[4%] font-[inherit]"
+                onClick={openModal}
                 title={`버전 ${update.version}으로 업데이트`}
               >
-                <DownloadCloud size={14} className={installing ? "animate-spin-fast" : ""} />
-                {installing ? "설치 중..." : `v${update.version} 업데이트`}
+                <DownloadCloud size={14} />
+                {`v${update.version} 업데이트`}
               </button>
             )}
             <button
@@ -245,6 +244,38 @@ export default function App() {
       <footer className="px-7 py-3 border-t border-edge text-center text-[11px] text-muted shrink-0">
         <span>오프라인 동작 · 개인정보 수집 없음</span>
       </footer>
+
+      {/* Update modal */}
+      {update && showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border border-edge rounded-[12px] px-7 py-6 w-[340px] flex flex-col gap-5 shadow-2xl animate-slide-down">
+            <div className="flex flex-col gap-1.5">
+              <p className="text-[15px] font-bold text-fg">새 버전이 있습니다</p>
+              <p className="text-[13px] text-muted leading-relaxed">
+                v{update.version} 업데이트가 출시됐습니다.<br />
+                지금 업데이트하시겠습니까?
+              </p>
+            </div>
+            <div className="flex gap-2.5 justify-end">
+              <button
+                className="px-4 py-2 rounded-[8px] border border-edge bg-transparent text-muted text-[13px] font-medium cursor-pointer hover:text-fg hover:bg-white/[3%] transition-colors font-[inherit] disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={dismiss}
+                disabled={installing}
+              >
+                나중에
+              </button>
+              <button
+                className="flex items-center gap-1.5 px-4 py-2 rounded-[8px] bg-blue/20 border border-blue/30 text-blue text-[13px] font-semibold cursor-pointer hover:bg-blue/30 transition-colors font-[inherit] disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={install}
+                disabled={installing}
+              >
+                <DownloadCloud size={14} className={installing ? "animate-spin-fast" : ""} />
+                {installing ? "설치 중..." : "지금 업데이트"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
