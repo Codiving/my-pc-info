@@ -1,3 +1,5 @@
+import type { AppKind } from "../utils/appKind";
+
 export interface CpuInfo {
   name: string;
   manufacturer: string;
@@ -105,7 +107,7 @@ export interface SpecRequirement {
 export interface AppRequirement {
   id: string;
   name: string;
-  kind: "game" | "program";
+  kind: AppKind;
   tags: string[];
   aliases?: string[];
   sourceName?: string;

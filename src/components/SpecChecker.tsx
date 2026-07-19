@@ -14,6 +14,7 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import { REQUIREMENTS } from "../data/requirements";
 import { checkSpec } from "../utils/specChecker";
+import { appKindLabel } from "../utils/appKind";
 import type { HardwareInfo, SpecCheckResult, JudgmentLevel, ConfidenceLevel } from "../types/hardware";
 import { cn } from "../utils/cn";
 
@@ -238,7 +239,7 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
         <div className="flex items-center gap-2">
           <span className="text-[14px] font-bold text-fg">{result.app.name}</span>
           <span className="text-[11px] text-muted bg-white/[5%] border border-edge rounded-[4px] px-[7px] py-px">
-            {result.app.kind === "game" ? "게임" : "프로그램"}
+            {appKindLabel(result.app.kind)}
           </span>
         </div>
         <div className="flex gap-1.5 items-center flex-wrap">
