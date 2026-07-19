@@ -57,7 +57,7 @@ function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
 export function DetailPanel({ data }: { data: HardwareInfo }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
-  const { cpu, gpus, ram, drives, motherboard, os, network, battery } = data;
+  const { cpu, gpus, ram, drives, motherboard, os, network, battery, wmi_errors } = data;
 
   const availableKeys = [
     cpu ? "cpu" : null,
@@ -106,7 +106,16 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
       </div>
 
       {panelOpen && (
-        <div className="px-4 pb-4 pt-3 grid grid-cols-1 min-[520px]:grid-cols-2 gap-2 border-t border-edge animate-slide-down">
+        <div className="px-4 pb-4 pt-3 flex flex-col gap-2 border-t border-edge animate-slide-down">
+          {wmi_errors.length > 0 && (
+            <div className="rounded-[8px] border border-red/30 bg-red/5 px-3.5 py-3 flex flex-col gap-1">
+              <p className="text-[12px] font-semibold text-red uppercase tracking-[0.6px]">WMI 진단 오류</p>
+              {wmi_errors.map((e, i) => (
+                <p key={i} className="text-[12px] text-muted font-mono break-all">{e}</p>
+              ))}
+            </div>
+          )}
+        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 gap-2">
           {cpu && (
             <AccordionItem icon={Cpu} label="CPU" open={openItems.has("cpu")} onToggle={() => toggleItem("cpu")}>
               <Section title="프로세서">
@@ -238,6 +247,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
               </Section>
             </AccordionItem>
           )}
+        </div>
         </div>
       )}
     </div>

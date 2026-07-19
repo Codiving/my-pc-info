@@ -149,4 +149,5 @@ export interface HardwareInfo {
   battery: BatteryInfo | null;
   is_laptop: boolean;
   computer_name: string;
+  wmi_errors: string[];
 }
