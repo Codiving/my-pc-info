@@ -11,6 +11,7 @@ import {
   autoUpdate,
   FloatingPortal,
 } from "@floating-ui/react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { REQUIREMENTS } from "../data/requirements";
 import { checkSpec } from "../utils/specChecker";
 import type { HardwareInfo, SpecCheckResult, JudgmentLevel, ConfidenceLevel } from "../types/hardware";
@@ -134,6 +135,14 @@ function resultSummary(result: SpecCheckResult): { title: string; detail: string
   };
 }
 
+async function openExternalUrl(url: string) {
+  try {
+    await openUrl(url);
+  } catch {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
 // ─── Component icons ──────────────────────────────────────────────────────────
 
 function LevelIcon({ level }: { level: JudgmentLevel }) {
@@ -246,16 +255,15 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
               <div className="min-w-0">
                 <div className="text-[12px] font-semibold text-sub">출처</div>
               </div>
-              <a
-                href={result.app.source}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => void openExternalUrl(result.app.source!)}
                 className="inline-flex items-center gap-1 shrink-0 rounded-[7px] border border-edge bg-base px-2.5 py-1.5 text-[11px] font-semibold text-sub transition-colors hover:border-edge/80 hover:text-fg"
                 title={result.app.source}
               >
                 문서 열기
                 <ExternalLink size={11} />
-              </a>
+              </button>
             </div>
             <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted break-all">
               <span className="font-medium text-muted">{source}</span>
