@@ -31,8 +31,6 @@ export function StorageCard({ drives }: StorageCardProps) {
     setTimeout(() => setJustCopied(false), 2000);
   };
 
-  if (drives.length === 0) return null;
-
   return (
     <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-edge/80 shadow-[0_2px_12px_rgba(0,0,0,0.22)] hover:shadow-[0_3px_14px_rgba(0,0,0,0.26)]">
       <div className="flex items-center justify-between gap-2">
@@ -47,14 +45,19 @@ export function StorageCard({ drives }: StorageCardProps) {
             "w-8 h-8 flex items-center justify-center rounded-[8px] border transition-all duration-150 shrink-0 cursor-pointer",
             justCopied
               ? "border-edge text-green bg-white/[4%]"
-              : "border-edge text-muted hover:border-edge hover:text-fg hover:bg-white/[4%]"
+              : "border-edge text-muted hover:border-edge hover:text-fg hover:bg-white/[4%] disabled:opacity-30 disabled:cursor-not-allowed"
           )}
           onClick={handleCopy}
+          disabled={drives.length === 0}
           title="저장장치 정보 복사"
         >
           {justCopied ? <Check size={14} /> : <Copy size={14} />}
         </button>
       </div>
+
+      {drives.length === 0 && (
+        <span className="text-muted text-[13px] font-normal italic">감지 불가</span>
+      )}
 
       <div className="flex flex-col gap-3.5">
         {drives.map((drive) => {

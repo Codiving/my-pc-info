@@ -126,10 +126,10 @@ mod platform {
     #[allow(non_snake_case)]
     #[derive(serde::Deserialize, Debug)]
     struct Win32Processor {
-        Name: String,
+        Name: Option<String>,
         Manufacturer: Option<String>,
-        NumberOfCores: u32,
-        NumberOfLogicalProcessors: u32,
+        NumberOfCores: Option<u32>,
+        NumberOfLogicalProcessors: Option<u32>,
         MaxClockSpeed: Option<u32>,
         CurrentClockSpeed: Option<u32>,
         LoadPercentage: Option<u32>,
@@ -140,7 +140,7 @@ mod platform {
     #[allow(non_snake_case)]
     #[derive(serde::Deserialize, Debug)]
     struct Win32VideoController {
-        Name: String,
+        Name: Option<String>,
         AdapterRAM: Option<u64>,
         DriverVersion: Option<String>,
         CurrentHorizontalResolution: Option<u32>,
@@ -152,19 +152,19 @@ mod platform {
     #[allow(non_snake_case)]
     #[derive(serde::Deserialize, Debug)]
     struct Win32PhysicalMemory {
-        Capacity: u64,
+        Capacity: Option<u64>,
         Speed: Option<u32>,
         SMBIOSMemoryType: Option<u32>,
-        DeviceLocator: String,
+        DeviceLocator: Option<String>,
         Manufacturer: Option<String>,
     }
 
     #[allow(non_snake_case)]
     #[derive(serde::Deserialize, Debug)]
     struct Win32OperatingSystem {
-        Caption: String,
-        Version: String,
-        BuildNumber: String,
+        Caption: Option<String>,
+        Version: Option<String>,
+        BuildNumber: Option<String>,
         OSArchitecture: Option<String>,
         TotalVisibleMemorySize: Option<u64>,
         FreePhysicalMemory: Option<u64>,
@@ -175,7 +175,7 @@ mod platform {
     #[allow(non_snake_case)]
     #[derive(serde::Deserialize, Debug)]
     struct Win32ComputerSystem {
-        Name: String,
+        Name: Option<String>,
         Manufacturer: Option<String>,
         Model: Option<String>,
         PCSystemType: Option<u32>,
@@ -184,7 +184,7 @@ mod platform {
     #[allow(non_snake_case)]
     #[derive(serde::Deserialize, Debug)]
     struct Win32LogicalDisk {
-        DeviceID: String,
+        DeviceID: Option<String>,
         VolumeName: Option<String>,
         Size: Option<u64>,
         FreeSpace: Option<u64>,
@@ -317,39 +317,43 @@ mod platform {
         // ── CPU ────────────────────────────────────────────────────────────────
         let cpu = wmi_con.query::<Win32Processor>().ok()
             .and_then(|v| v.into_iter().next())
-            .map(|p| CpuInfo {
-                name: p.Name.trim().to_string(),
-                manufacturer: p.Manufacturer.unwrap_or_default().trim().to_string(),
-                cores: p.NumberOfCores,
-                threads: p.NumberOfLogicalProcessors,
-                base_clock_mhz: p.CurrentClockSpeed.unwrap_or(0),
-                max_clock_mhz: p.MaxClockSpeed.unwrap_or(0),
-                usage_percent: p.LoadPercentage.unwrap_or(0),
-                architecture: if p.Architecture == Some(9) { "x64".into() } else { "x86".into() },
-                virtualization: p.VirtualizationFirmwareEnabled.unwrap_or(false),
+            .and_then(|p| {
+                let name = p.Name.as_deref()?.trim().to_string();
+                Some(CpuInfo {
+                    name,
+                    manufacturer: p.Manufacturer.unwrap_or_default().trim().to_string(),
+                    cores: p.NumberOfCores.unwrap_or(0),
+                    threads: p.NumberOfLogicalProcessors.unwrap_or(0),
+                    base_clock_mhz: p.CurrentClockSpeed.unwrap_or(0),
+                    max_clock_mhz: p.MaxClockSpeed.unwrap_or(0),
+                    usage_percent: p.LoadPercentage.unwrap_or(0),
+                    architecture: if p.Architecture == Some(9) { "x64".into() } else { "x86".into() },
+                    virtualization: p.VirtualizationFirmwareEnabled.unwrap_or(false),
+                })
             });
 
         // ── GPU ────────────────────────────────────────────────────────────────
         let gpus = wmi_con.query::<Win32VideoController>().unwrap_or_default()
             .into_iter()
-            .map(|g| {
+            .filter_map(|g| {
+                let name = g.Name.as_deref()?.trim().to_string();
                 let vram_gb = g.AdapterRAM.filter(|&v| v > 512 * 1024 * 1024)
                     .map(|v| (v as f64 / (1u64 << 30) as f64 * 10.0).round() / 10.0);
-                let mfr = detect_gpu_manufacturer(&g.Name, g.AdapterCompatibility.as_deref());
-                let is_integrated = detect_integrated_gpu(&g.Name, &mfr);
+                let mfr = detect_gpu_manufacturer(&name, g.AdapterCompatibility.as_deref());
+                let is_integrated = detect_integrated_gpu(&name, &mfr);
                 let resolution = match (g.CurrentHorizontalResolution, g.CurrentVerticalResolution) {
                     (Some(w), Some(h)) if w > 0 => format!("{w}×{h}"),
                     _ => String::new(),
                 };
-                GpuInfo {
+                Some(GpuInfo {
                     manufacturer: mfr,
-                    name: g.Name.trim().to_string(),
+                    name,
                     vram_gb,
                     driver_version: g.DriverVersion.unwrap_or_default().trim().to_string(),
                     resolution,
                     refresh_rate: g.CurrentRefreshRate.unwrap_or(0),
                     is_integrated,
-                }
+                })
             })
             .collect();
 
@@ -371,8 +375,8 @@ mod platform {
             ).to_string();
             let slots_used = ram_modules.len() as u32;
             let slots = ram_modules.iter().map(|m| RamSlotInfo {
-                slot: m.DeviceLocator.trim().to_string(),
-                capacity_gb: m.Capacity as f64 / (1u64 << 30) as f64,
+                slot: m.DeviceLocator.as_deref().unwrap_or("Unknown").trim().to_string(),
+                capacity_gb: m.Capacity.unwrap_or(0) as f64 / (1u64 << 30) as f64,
                 speed_mhz: m.Speed.unwrap_or(0),
                 memory_type: memory_type_name(m.SMBIOSMemoryType.unwrap_or(0)).to_string(),
                 manufacturer: m.Manufacturer.as_deref().unwrap_or("Unknown").trim()
@@ -383,9 +387,9 @@ mod platform {
 
         // ── OS ─────────────────────────────────────────────────────────────────
         let os = os_entry.map(|o| OsInfo {
-            name: o.Caption.trim().to_string(),
-            version: o.Version.clone(),
-            build: o.BuildNumber.clone(),
+            name: o.Caption.unwrap_or_default().trim().to_string(),
+            version: o.Version.unwrap_or_default(),
+            build: o.BuildNumber.unwrap_or_default(),
             architecture: o.OSArchitecture.unwrap_or_else(|| "64비트".into()),
             install_date: o.InstallDate.as_deref().map(format_wmi_date).unwrap_or_default(),
             last_boot: o.LastBootUpTime.as_deref().map(format_wmi_date).unwrap_or_default(),
@@ -395,7 +399,7 @@ mod platform {
         // ── Computer System ────────────────────────────────────────────────────
         let cs: Vec<Win32ComputerSystem> = wmi_con.query().unwrap_or_default();
         let cs_entry = cs.into_iter().next();
-        let computer_name = cs_entry.as_ref().map(|c| c.Name.clone()).unwrap_or_default();
+        let computer_name = cs_entry.as_ref().and_then(|c| c.Name.clone()).unwrap_or_default();
         let is_laptop = cs_entry.as_ref().and_then(|c| c.PCSystemType) == Some(2);
 
         // ── Storage ────────────────────────────────────────────────────────────
@@ -418,14 +422,16 @@ mod platform {
 
         let drives: Vec<DriveInfo> = logical_disks.into_iter()
             .filter(|d| d.DriveType == Some(3))
-            .map(|d| {
+            .filter_map(|d| {
+                let letter = d.DeviceID?;
                 let total = d.Size.unwrap_or(0);
                 let free  = d.FreeSpace.unwrap_or(0);
                 let total_gb = total as f64 / (1u64 << 30) as f64;
                 let free_gb  = free  as f64 / (1u64 << 30) as f64;
                 let used_pct = if total > 0 { ((total - free) * 100 / total) as u32 } else { 0 };
-                DriveInfo {
-                    letter: d.DeviceID.clone(),
+                let is_boot = letter.to_uppercase() == "C:";
+                Some(DriveInfo {
+                    letter,
                     label: d.VolumeName.unwrap_or_default().trim().to_string(),
                     total_gb, free_gb, used_percent: used_pct,
                     drive_type: default_type.clone(),
@@ -433,9 +439,9 @@ mod platform {
                     interface_type: phys_disks.first()
                         .and_then(|p| p.InterfaceType.as_deref().map(str::to_string))
                         .unwrap_or_default(),
-                    is_boot: d.DeviceID.to_uppercase() == "C:",
+                    is_boot,
                     file_system: d.FileSystem.unwrap_or_default(),
-                }
+                })
             })
             .collect();
 
