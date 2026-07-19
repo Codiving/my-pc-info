@@ -113,7 +113,6 @@ pub struct HardwareInfo {
     pub battery: Option<BatteryInfo>,
     pub is_laptop: bool,
     pub computer_name: String,
-    pub wmi_errors: Vec<String>,
 }
 
 // ─── Windows implementation ───────────────────────────────────────────────────
@@ -315,11 +314,9 @@ mod platform {
         let com_con = COMLibrary::new().map_err(|e| format!("COM 초기화 실패: {e}"))?;
         let wmi_con = WMIConnection::new(com_con).map_err(|e| format!("WMI 연결 실패: {e}"))?;
 
-        let mut wmi_errors: Vec<String> = Vec::new();
-
         // ── CPU ────────────────────────────────────────────────────────────────
         let cpu = match wmi_con.query::<Win32_Processor>() {
-            Err(e) => { wmi_errors.push(format!("CPU 쿼리 실패: {e}")); None }
+            Err(_) => None,
             Ok(v) => v.into_iter().next().and_then(|p| {
                 let name = p.Name.as_deref()?.trim().to_string();
                 Some(CpuInfo {
@@ -338,7 +335,7 @@ mod platform {
 
         // ── GPU ────────────────────────────────────────────────────────────────
         let gpus: Vec<GpuInfo> = match wmi_con.query::<Win32_VideoController>() {
-            Err(e) => { wmi_errors.push(format!("GPU 쿼리 실패: {e}")); vec![] }
+            Err(_) => vec![],
             Ok(v) => v.into_iter().filter_map(|g| {
                 let name = g.Name.as_deref()?.trim().to_string();
                 let vram_gb = g.AdapterRAM.filter(|&v| v > 512 * 1024 * 1024)
@@ -360,19 +357,10 @@ mod platform {
                 })
             }).collect(),
         };
-        if gpus.is_empty() && !wmi_errors.iter().any(|e| e.starts_with("GPU")) {
-            wmi_errors.push("GPU 쿼리 결과 없음".into());
-        }
 
         // ── RAM ────────────────────────────────────────────────────────────────
-        let ram_modules: Vec<Win32_PhysicalMemory> = match wmi_con.query() {
-            Err(e) => { wmi_errors.push(format!("RAM 쿼리 실패: {e}")); vec![] }
-            Ok(v) => v,
-        };
-        let os_entries: Vec<Win32_OperatingSystem> = match wmi_con.query() {
-            Err(e) => { wmi_errors.push(format!("OS 쿼리 실패: {e}")); vec![] }
-            Ok(v) => v,
-        };
+        let ram_modules: Vec<Win32_PhysicalMemory> = wmi_con.query().unwrap_or_default();
+        let os_entries: Vec<Win32_OperatingSystem> = wmi_con.query().unwrap_or_default();
         let os_entry = os_entries.into_iter().next();
 
         let ram = if ram_modules.is_empty() { None } else {
@@ -410,20 +398,14 @@ mod platform {
         });
 
         // ── Computer System ────────────────────────────────────────────────────
-        let cs: Vec<Win32_ComputerSystem> = match wmi_con.query() {
-            Err(e) => { wmi_errors.push(format!("ComputerSystem 쿼리 실패: {e}")); vec![] }
-            Ok(v) => v,
-        };
+        let cs: Vec<Win32_ComputerSystem> = wmi_con.query().unwrap_or_default();
         let cs_entry = cs.into_iter().next();
         let computer_name = cs_entry.as_ref().and_then(|c| c.Name.clone()).unwrap_or_default();
         let is_laptop = cs_entry.as_ref().and_then(|c| c.PCSystemType) == Some(2);
 
         // ── Storage ────────────────────────────────────────────────────────────
         let phys_disks: Vec<Win32_DiskDrive> = wmi_con.query().unwrap_or_default();
-        let logical_disks: Vec<Win32_LogicalDisk> = match wmi_con.query() {
-            Err(e) => { wmi_errors.push(format!("LogicalDisk 쿼리 실패: {e}")); vec![] }
-            Ok(v) => v,
-        };
+        let logical_disks: Vec<Win32_LogicalDisk> = wmi_con.query().unwrap_or_default();
 
         // Build disk index → type map from physical disks
         let disk_type_map: Vec<String> = phys_disks.iter().map(|d| {
@@ -530,7 +512,7 @@ mod platform {
             }
         });
 
-        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, is_laptop, computer_name, wmi_errors })
+        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, is_laptop, computer_name })
     }
 }
 

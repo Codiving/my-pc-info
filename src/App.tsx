@@ -240,11 +240,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="px-7 py-3 border-t border-edge text-center text-[11px] text-muted shrink-0">
-        <span>오프라인 동작 · 개인정보 수집 없음</span>
-      </footer>
-
       {/* Update modal */}
       {update && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
