@@ -34,10 +34,10 @@ export function StorageCard({ drives }: StorageCardProps) {
   if (drives.length === 0) return null;
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-slate-500 shadow-[0_4px_24px_rgba(0,0,0,0.4)] hover:shadow-[0_6px_32px_rgba(0,0,0,0.5)]">
+    <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-edge/80 shadow-[0_2px_12px_rgba(0,0,0,0.22)] hover:shadow-[0_3px_14px_rgba(0,0,0,0.26)]">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 text-amber bg-amber/[12%]">
+          <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 text-muted bg-white/[4%] border border-edge/60">
             <HardDrive size={22} />
           </div>
           <div className="text-[16px] font-bold text-fg">저장장치</div>
@@ -46,8 +46,8 @@ export function StorageCard({ drives }: StorageCardProps) {
           className={cn(
             "w-8 h-8 flex items-center justify-center rounded-[8px] border transition-all duration-150 shrink-0 cursor-pointer",
             justCopied
-              ? "border-green text-green bg-green/[8%]"
-              : "border-edge text-muted hover:border-blue hover:text-blue hover:bg-blue/[8%]"
+              ? "border-edge text-green bg-white/[4%]"
+              : "border-edge text-muted hover:border-edge hover:text-fg hover:bg-white/[4%]"
           )}
           onClick={handleCopy}
           title="저장장치 정보 복사"
@@ -66,11 +66,11 @@ export function StorageCard({ drives }: StorageCardProps) {
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[15px] font-bold text-fg">{drive.letter}</span>
                   {drive.is_boot && (
-                    <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-blue/15 text-blue border border-blue/30">
+                    <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-white/[4%] text-sub border border-edge/60">
                       부팅
                     </span>
                   )}
-                  <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-amber/[12%] text-amber">
+                  <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-white/[4%] text-muted border border-edge/60">
                     {drive.drive_type}
                   </span>
                   {drive.label && <span className="text-[13px] text-muted">{drive.label}</span>}

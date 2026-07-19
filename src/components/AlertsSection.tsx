@@ -48,13 +48,13 @@ export function AlertsSection({ data }: { data: HardwareInfo }) {
           className={cn(
             "flex items-start gap-2 px-3.5 py-2.5 rounded-[8px] text-[13px] leading-relaxed border",
             a.level === "warn"
-              ? "bg-amber/[8%] border-amber/25 text-amber"
-              : "bg-blue/[7%] border-blue/20 text-sub"
+              ? "bg-white/[3%] border-edge/60 text-amber"
+              : "bg-white/[2%] border-edge/60 text-sub"
           )}
         >
           {a.level === "warn"
             ? <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber" />
-            : <Info size={14} className="shrink-0 mt-0.5 text-blue" />
+            : <Info size={14} className="shrink-0 mt-0.5 text-muted" />
           }
           <span>{a.message}</span>
         </div>

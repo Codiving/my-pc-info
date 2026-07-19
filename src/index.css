@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-base: #0f172a;
-  --color-card: #1e293b;
-  --color-card-hover: #263548;
-  --color-fg: #f1f5f9;
-  --color-sub: #b8c8d8;
-  --color-muted: #8a9bb0;
-  --color-edge: #334155;
-  --color-blue: #3b82f6;
-  --color-purple: #a855f7;
-  --color-green: #22c55e;
-  --color-red: #ef4444;
-  --color-amber: #f59e0b;
+  --color-base: #0b1220;
+  --color-card: #172033;
+  --color-card-hover: #1d2940;
+  --color-fg: #e7edf5;
+  --color-sub: #c2ccda;
+  --color-muted: #91a0b4;
+  --color-edge: #2a3648;
+  --color-blue: #5d8fe0;
+  --color-purple: #8f78d8;
+  --color-green: #4aa36b;
+  --color-red: #cf6770;
+  --color-amber: #c7923d;
 }
 
 html,
@@ -25,8 +25,10 @@ body,
 body {
   font-family: -apple-system, "Malgun Gothic", "맑은 고딕", BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  background: #0f172a;
-  color: #f1f5f9;
+  background:
+    radial-gradient(circle at top, rgba(93, 143, 224, 0.08), transparent 45%),
+    #0b1220;
+  color: #e7edf5;
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -35,7 +37,7 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+  scrollbar-color: #2a3648 transparent;
 }
 ::-webkit-scrollbar {
   width: 6px;
@@ -45,11 +47,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #2a3648;
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #394960;
 }
 ::-webkit-scrollbar-corner {
   background: transparent;

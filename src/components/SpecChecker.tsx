@@ -59,10 +59,10 @@ function levelLabel(level: JudgmentLevel): string {
 
 function levelClass(level: JudgmentLevel): string {
   switch (level) {
-    case "met":        return "bg-green/15 text-[#4ade80] border border-green/25";
-    case "borderline": return "bg-amber/15 text-[#fbbf24] border border-amber/25";
-    case "unmet":      return "bg-red/15 text-[#f87171] border border-red/25";
-    case "unknown":    return "bg-white/[5%] text-muted border border-edge";
+    case "met":        return "bg-white/[4%] text-green border border-edge/70";
+    case "borderline": return "bg-white/[4%] text-amber border border-edge/70";
+    case "unmet":      return "bg-white/[4%] text-red border border-edge/70";
+    case "unknown":    return "bg-white/[4%] text-muted border border-edge/70";
   }
 }
 
@@ -86,18 +86,18 @@ function confidenceLabel(c: ConfidenceLevel): string {
 
 function confidenceClass(c: ConfidenceLevel): string {
   switch (c) {
-    case "high":   return "bg-green/10 text-[#4ade80] border border-green/20";
-    case "medium": return "bg-amber/10 text-[#fbbf24] border border-amber/20";
-    case "low":    return "bg-white/[5%] text-muted border border-edge";
+    case "high":   return "bg-white/[4%] text-green border border-edge/70";
+    case "medium": return "bg-white/[4%] text-amber border border-edge/70";
+    case "low":    return "bg-white/[4%] text-muted border border-edge/70";
   }
 }
 
 function resultCardClass(overall: JudgmentLevel): string {
   switch (overall) {
-    case "met":        return "border-green/30 bg-green/[4%]";
-    case "borderline": return "border-amber/30 bg-amber/[4%]";
-    case "unmet":      return "border-red/30 bg-red/[4%]";
-    case "unknown":    return "border-edge bg-white/[2%]";
+    case "met":        return "border-edge/80 bg-white/[2%]";
+    case "borderline": return "border-edge/80 bg-white/[2%]";
+    case "unmet":      return "border-edge/80 bg-white/[2%]";
+    case "unknown":    return "border-edge/80 bg-white/[2%]";
   }
 }
 
@@ -185,7 +185,7 @@ function SpecBreakdown({ result }: { result: SpecCheckResult }) {
       ))}
 
       <button
-        className="flex items-center gap-[5px] mt-1.5 py-[5px] text-muted text-[12px] font-[inherit] cursor-pointer transition-colors hover:text-blue bg-transparent"
+        className="flex items-center gap-[5px] mt-1.5 py-[5px] text-muted text-[12px] font-[inherit] cursor-pointer transition-colors hover:text-fg bg-transparent"
         onClick={() => setShowReqs(v => !v)}
       >
         <Info size={12} />
@@ -194,7 +194,7 @@ function SpecBreakdown({ result }: { result: SpecCheckResult }) {
       </button>
 
       {showReqs && (
-        <div className="mt-1.5 p-2.5 bg-white/[3%] rounded-[8px] border border-edge/50 flex flex-col gap-[5px] animate-slide-down">
+        <div className="mt-1.5 p-2.5 bg-white/[2%] rounded-[8px] border border-edge/60 flex flex-col gap-[5px] animate-slide-down">
           {req.cpu        && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">CPU</span><span className="text-sub text-right break-keep">{req.cpu}</span></div>}
           {req.cpu_cores  && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">CPU 코어</span><span className="text-sub text-right">{req.cpu_cores}코어 이상</span></div>}
           {req.cpu_clock_ghz && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">CPU 클럭</span><span className="text-sub text-right">{req.cpu_clock_ghz}GHz 이상</span></div>}
@@ -234,11 +234,11 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
       </div>
       {result.app.source && (
         <div className="px-3.5 pb-1">
-          <div className="rounded-[10px] border border-blue/25 bg-blue/[7%] px-3 py-2.5">
+          <div className="rounded-[10px] border border-edge/70 bg-white/[2%] px-3 py-2.5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[12px] font-bold text-blue">공식 출처</div>
-                <p className="mt-0.5 text-[12px] leading-snug text-sub">
+                <div className="text-[12px] font-semibold text-sub">공식 출처</div>
+                <p className="mt-0.5 text-[12px] leading-snug text-muted">
                   이 판정은 아래 공식 문서를 기준으로 계산합니다.
                 </p>
               </div>
@@ -246,7 +246,7 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
                 href={result.app.source}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 shrink-0 rounded-[8px] border border-blue/30 bg-base px-2.5 py-1.5 text-[11px] font-semibold text-blue transition-colors hover:bg-blue/10"
+                className="inline-flex items-center gap-1.5 shrink-0 rounded-[8px] border border-edge bg-base px-2.5 py-1.5 text-[11px] font-semibold text-sub transition-colors hover:border-edge/80 hover:text-fg"
                 title={result.app.source}
               >
                 문서 열기
@@ -254,7 +254,7 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
               </a>
             </div>
             <div className="mt-2 flex items-center gap-2 text-[11px] text-muted break-all">
-              <span className="font-medium text-sub">{source}</span>
+              <span className="font-medium text-muted">{source}</span>
               <span className="text-edge">·</span>
               <span>{result.app.source}</span>
             </div>
@@ -262,7 +262,7 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
         </div>
       )}
       <div className="px-3.5 pb-1">
-        <div className="rounded-[8px] border border-edge/50 bg-black/[10%] px-3 py-2">
+        <div className="rounded-[8px] border border-edge/60 bg-white/[2%] px-3 py-2">
           <div className="text-[14px] font-semibold text-fg">{summary.title}</div>
           <div className="mt-0.5 text-[12px] leading-snug text-muted">{summary.detail}</div>
         </div>
@@ -386,13 +386,13 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
   }
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex flex-col flex-1 min-h-0 overflow-hidden">
+    <div className="bg-card border border-edge rounded-[14px] shadow-[0_2px_12px_rgba(0,0,0,0.22)] flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Top: header + search */}
       <div className="px-4 py-3.5 flex flex-col gap-2.5 shrink-0 border-b border-edge">
         <div className="flex items-center gap-2 text-[14px] font-bold text-fg">
           <Gamepad2 size={15} />
           <span>게임 / 프로그램 사양 검사</span>
-          <span className="ml-auto text-[11px] font-medium text-muted bg-white/[5%] border border-edge rounded-[4px] px-2 py-px">
+          <span className="ml-auto text-[11px] font-medium text-muted bg-white/[4%] border border-edge rounded-[4px] px-2 py-px">
             추정 판정
           </span>
         </div>
@@ -403,7 +403,7 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
             <Search size={14} className="absolute left-2.5 text-muted pointer-events-none" />
             <input
               ref={inputRef}
-              className="w-full py-2 pl-8 pr-8 bg-base border border-edge rounded-[8px] text-fg text-[13px] font-[inherit] outline-none transition-colors focus:border-blue placeholder:text-muted"
+              className="w-full py-2 pl-8 pr-8 bg-base border border-edge rounded-[8px] text-fg text-[13px] font-[inherit] outline-none transition-colors focus:border-edge/80 placeholder:text-muted"
               placeholder="게임, 프로그램 또는 별칭 검색... (예: 롤, 배그, 포토샵)"
               value={query}
               {...getReferenceProps({
@@ -435,8 +435,8 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
                 className={cn(
                   "px-3.5 py-[7px] text-[12px] font-semibold font-[inherit] border-none cursor-pointer transition-all duration-150",
                   tier === "minimum"
-                    ? "bg-blue text-white"
-                    : "bg-transparent text-muted hover:bg-card-hover hover:text-sub"
+                    ? "bg-white/[5%] text-fg"
+                    : "bg-transparent text-muted hover:bg-white/[4%] hover:text-sub"
                 )}
                 onClick={() => setTier("minimum")}
               >
@@ -446,11 +446,11 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
                 className={cn(
                   "px-3.5 py-[7px] text-[12px] font-semibold font-[inherit] border-none transition-all duration-150",
                   tier === "recommended"
-                    ? "bg-blue text-white"
+                    ? "bg-white/[5%] text-fg"
                     : "bg-transparent text-muted",
                   !hasRecommended
                     ? "opacity-35 cursor-not-allowed"
-                    : "cursor-pointer hover:bg-card-hover hover:text-sub"
+                    : "cursor-pointer hover:bg-white/[4%] hover:text-sub"
                 )}
                 onClick={() => hasRecommended && setTier("recommended")}
                 disabled={!hasRecommended}
@@ -468,7 +468,7 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
             {POPULAR_QUERIES.map((item) => (
               <button
                 key={item}
-                className="px-2.5 py-1 rounded-[999px] border border-edge bg-white/[3%] text-[11px] text-sub font-medium cursor-pointer transition-colors hover:bg-card-hover hover:text-fg hover:border-slate-500"
+              className="px-2.5 py-1 rounded-[999px] border border-edge bg-white/[2%] text-[11px] text-sub font-medium cursor-pointer transition-colors hover:bg-white/[4%] hover:text-fg hover:border-edge"
                 onClick={() => {
                   setQuery(item);
                   setOpen(true);
@@ -506,7 +506,7 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
           <div
             ref={refs.setFloating}
             style={floatingStyles}
-            className="bg-card border border-edge rounded-[8px] shadow-[0_8px_32px_rgba(0,0,0,0.6)] z-[100] overflow-y-auto"
+            className="bg-card border border-edge rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] z-[100] overflow-y-auto"
             {...getFloatingProps()}
           >
             {filtered.length > 0 ? (

@@ -33,7 +33,7 @@ function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
   return (
     <div className="rounded-[8px]">
       <button
-        className="w-full px-3.5 py-3 bg-white/[3%] text-sub text-[13px] font-semibold cursor-pointer flex items-center justify-between font-[inherit] rounded-[8px] transition-all duration-150 hover:bg-white/[6%] hover:text-fg"
+        className="w-full px-3.5 py-3 bg-white/[2%] text-sub text-[13px] font-semibold cursor-pointer flex items-center justify-between font-[inherit] rounded-[8px] transition-all duration-150 hover:bg-white/[4%] hover:text-fg"
         onClick={onToggle}
       >
         <span className="flex items-center gap-2">
@@ -83,7 +83,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
   };
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex flex-col">
+    <div className="bg-card border border-edge rounded-[14px] shadow-[0_2px_12px_rgba(0,0,0,0.22)] flex flex-col">
       <div className="flex items-center justify-between px-5">
         <button
           className="flex-1 py-4 bg-transparent text-fg text-[15px] font-bold cursor-pointer flex items-center gap-2 font-[inherit] transition-colors"
@@ -97,7 +97,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
         </button>
         {panelOpen && (
           <button
-            className="px-3 py-[5px] rounded-[8px] border border-edge bg-transparent text-muted text-[12px] font-medium cursor-pointer transition-all duration-150 whitespace-nowrap hover:border-blue hover:text-blue hover:bg-blue/[8%] font-[inherit]"
+            className="px-3 py-[5px] rounded-[8px] border border-edge bg-transparent text-muted text-[12px] font-medium cursor-pointer transition-all duration-150 whitespace-nowrap hover:border-edge/80 hover:text-fg hover:bg-white/[4%] font-[inherit]"
             onClick={toggleAll}
           >
             {allOpen ? "전체 접기" : "전체 열기"}
@@ -152,7 +152,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
               {ram.slots.length > 0 && (
                 <Section title="슬롯별 정보">
                   {ram.slots.map((slot, i) => (
-                    <div key={i} className="bg-white/[3%] rounded-[8px] px-3 py-2.5 border border-edge/50 mt-2 first:mt-0">
+                    <div key={i} className="bg-white/[2%] rounded-[8px] px-3 py-2.5 border border-edge/60 mt-2 first:mt-0">
                       <div className="text-[11px] font-semibold text-muted uppercase tracking-[0.5px] mb-2">{slot.slot}</div>
                       <Row label="용량" value={`${slot.capacity_gb.toFixed(0)} GB`} />
                       <Row label="규격" value={slot.memory_type} />

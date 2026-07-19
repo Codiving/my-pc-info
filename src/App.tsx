@@ -25,7 +25,7 @@ function formatAllSpecs(data: HardwareInfo): string {
 function LoadingScreen() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted">
-      <div className="w-8 h-8 rounded-full border-2 border-edge border-t-blue animate-spin-fast" />
+      <div className="w-8 h-8 rounded-full border-2 border-edge border-t-muted animate-spin-fast" />
       <p>PC 사양을 불러오는 중...</p>
     </div>
   );
@@ -48,7 +48,7 @@ function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => voi
       <p className="text-[16px] font-semibold text-fg">정보를 가져오지 못했습니다</p>
       <p className="text-[13px] text-muted max-w-[400px] break-keep">{message}</p>
       <button
-        className="mt-2 px-6 py-2.5 rounded-[8px] border border-blue bg-blue/10 text-blue text-sm font-semibold hover:bg-blue/20 transition-colors cursor-pointer font-[inherit]"
+        className="mt-2 px-6 py-2.5 rounded-[8px] border border-edge bg-white/[3%] text-sub text-sm font-semibold hover:bg-white/[5%] hover:text-fg transition-colors cursor-pointer font-[inherit]"
         onClick={onRetry}
       >
         다시 시도
@@ -112,7 +112,7 @@ export default function App() {
         {!isWindowsOnly && (
           <div className="flex gap-2.5">
             <button
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-sub text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-card-hover hover:text-fg hover:border-slate-500 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-sub text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-white/[4%] hover:text-fg hover:border-edge/80 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]"
               onClick={handleRefresh}
               disabled={loading || refreshing}
               title="새로고침"
@@ -124,8 +124,8 @@ export default function App() {
               className={cn(
                 "flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border text-[13px] font-medium cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]",
                 copied
-                  ? "bg-green/10 border-green text-green"
-                  : "bg-base border-edge text-sub hover:bg-card-hover hover:text-fg hover:border-slate-500"
+                  ? "bg-white/[4%] border-edge text-green"
+                  : "bg-base border-edge text-sub hover:bg-white/[4%] hover:text-fg hover:border-edge/80"
               )}
               onClick={handleCopyAll}
               disabled={!data}
@@ -143,7 +143,7 @@ export default function App() {
           <button
             className={cn(
               "flex items-center gap-[7px] px-[18px] py-[11px] bg-transparent border-b-2 text-[13px] font-semibold font-[inherit] cursor-pointer transition-all duration-150 -mb-px",
-              activeTab === "specs" ? "text-blue border-b-blue" : "text-muted border-b-transparent hover:text-sub"
+              activeTab === "specs" ? "text-sub border-b-sub" : "text-muted border-b-transparent hover:text-sub"
             )}
             onClick={() => setActiveTab("specs")}
           >
@@ -153,7 +153,7 @@ export default function App() {
           <button
             className={cn(
               "flex items-center gap-[7px] px-[18px] py-[11px] bg-transparent border-b-2 text-[13px] font-semibold font-[inherit] cursor-pointer transition-all duration-150 -mb-px",
-              activeTab === "checker" ? "text-blue border-b-blue" : "text-muted border-b-transparent hover:text-sub"
+              activeTab === "checker" ? "text-sub border-b-sub" : "text-muted border-b-transparent hover:text-sub"
             )}
             onClick={() => setActiveTab("checker")}
           >
