@@ -99,7 +99,7 @@ export default function App() {
   const ram = data?.ram;
 
   return (
-    <div className="flex flex-col h-screen min-w-[700px] overflow-hidden">
+    <div className="flex flex-col h-screen min-w-0 overflow-hidden">
       {/* Header */}
       <header className="flex items-center justify-between px-7 py-[18px] bg-base border-b border-edge gap-4 shrink-0">
         <div className="flex items-center gap-3">
@@ -180,7 +180,7 @@ export default function App() {
 
             {activeTab === "specs" && (
               <>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                   <HardwareCard
                     Icon={Cpu}
                     title="CPU"

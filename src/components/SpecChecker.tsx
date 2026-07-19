@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, Gamepad2, Monitor, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Search, Gamepad2, Monitor, ChevronDown, ChevronUp, Info, ExternalLink } from "lucide-react";
 import {
   useFloating,
   useListNavigation,
@@ -16,7 +16,37 @@ import { checkSpec } from "../utils/specChecker";
 import type { HardwareInfo, SpecCheckResult, JudgmentLevel, ConfidenceLevel } from "../types/hardware";
 import { cn } from "../utils/cn";
 
+const POPULAR_QUERIES = ["롤", "발로란트", "배그", "포토샵", "프리미어"];
+
 // ─── Label helpers ────────────────────────────────────────────────────────────
+
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[\p{P}\p{S}\s_]+/gu, "");
+}
+
+function scoreRequirementMatch(requirement: (typeof REQUIREMENTS)[number], query: string): number {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return 0;
+
+  const fields = [
+    { value: requirement.name, score: 0 },
+    ...(requirement.aliases ?? []).map((value) => ({ value, score: 1 })),
+    ...requirement.tags.map((value) => ({ value, score: 2 })),
+  ];
+
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const field of fields) {
+    const normalizedField = normalizeSearchText(field.value);
+    if (normalizedField.includes(normalizedQuery)) {
+      bestScore = Math.min(bestScore, field.score);
+    }
+  }
+
+  return bestScore;
+}
 
 function levelLabel(level: JudgmentLevel): string {
   switch (level) {
@@ -69,6 +99,47 @@ function resultCardClass(overall: JudgmentLevel): string {
     case "unmet":      return "border-red/30 bg-red/[4%]";
     case "unknown":    return "border-edge bg-white/[2%]";
   }
+}
+
+function sourceLabel(app: Pick<SpecCheckResult["app"], "source" | "sourceName">): string {
+  if (!app.source) return "";
+  if (app.sourceName) return app.sourceName;
+
+  try {
+    return new URL(app.source).hostname.replace(/^www\./, "");
+  } catch {
+    return app.source;
+  }
+}
+
+function resultSummary(result: SpecCheckResult): { title: string; detail: string } {
+  const tierLabel = result.tier === "recommended" ? "권장" : "최소";
+
+  if (result.overall === "met") {
+    return {
+      title: `${tierLabel} 사양을 충족합니다.`,
+      detail: "현재 설정 기준으로는 무난하게 사용할 가능성이 높습니다.",
+    };
+  }
+
+  if (result.overall === "borderline") {
+    return {
+      title: `${tierLabel} 사양에 근접합니다.`,
+      detail: "설정을 조금 낮추면 더 안정적으로 사용할 수 있습니다.",
+    };
+  }
+
+  if (result.overall === "unmet") {
+    return {
+      title: `${tierLabel} 사양에 미달합니다.`,
+      detail: "실행은 되더라도 끊김이나 옵션 제한이 있을 수 있습니다.",
+    };
+  }
+
+  return {
+    title: "정확한 판정이 어렵습니다.",
+    detail: "일부 하드웨어를 인식하지 못해 결과가 보수적으로 계산됐습니다.",
+  };
 }
 
 // ─── Component icons ──────────────────────────────────────────────────────────
@@ -134,9 +205,17 @@ function SpecBreakdown({ result }: { result: SpecCheckResult }) {
           {req.storage_gb && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">저장 공간</span><span className="text-sub text-right">{req.storage_gb}GB 이상</span></div>}
           {req.notes      && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">비고</span><span className="text-amber text-right break-keep">{req.notes}</span></div>}
           {result.app.source && (
-            <div className="text-[11px] text-muted mt-1 pt-1.5 border-t border-edge/40 break-all">
-              출처: {result.app.source}
-            </div>
+            <a
+              href={result.app.source}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 mt-1 pt-1.5 border-t border-edge/40 text-[11px] text-muted break-all hover:text-fg"
+              title={result.app.source}
+            >
+              <span className="font-semibold text-blue">공식 출처</span>
+              <span>{sourceLabel(result.app)}</span>
+              <ExternalLink size={11} className="shrink-0" />
+            </a>
           )}
         </div>
       )}
@@ -145,6 +224,9 @@ function SpecBreakdown({ result }: { result: SpecCheckResult }) {
 }
 
 function ResultCard({ result }: { result: SpecCheckResult }) {
+  const summary = resultSummary(result);
+  const source = sourceLabel(result.app);
+
   return (
     <div className={cn("rounded-[8px] border overflow-hidden animate-slide-down", resultCardClass(result.overall))}>
       <div className="flex items-start justify-between gap-3 px-3.5 py-3 flex-wrap">
@@ -161,6 +243,27 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
           <span className={cn("text-[11px] px-2 py-[2px] rounded-[4px] font-medium", confidenceClass(result.confidence))}>
             {confidenceLabel(result.confidence)}
           </span>
+        </div>
+      </div>
+      {result.app.source && (
+        <div className="px-3.5 pb-1">
+          <a
+            href={result.app.source}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-[8px] border border-edge/60 bg-black/[10%] px-3 py-2 text-[12px] text-sub transition-colors hover:border-blue/40 hover:text-fg"
+            title={result.app.source}
+          >
+            <span className="font-semibold text-blue">공식 출처</span>
+            <span className="break-all">{source}</span>
+            <ExternalLink size={12} className="shrink-0" />
+          </a>
+        </div>
+      )}
+      <div className="px-3.5 pb-1">
+        <div className="rounded-[8px] border border-edge/50 bg-black/[10%] px-3 py-2">
+          <div className="text-[14px] font-semibold text-fg">{summary.title}</div>
+          <div className="mt-0.5 text-[12px] leading-snug text-muted">{summary.detail}</div>
         </div>
       </div>
       <SpecBreakdown result={result} />
@@ -180,10 +283,26 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const filtered = REQUIREMENTS.filter(r =>
-    r.name.toLowerCase().includes(query.toLowerCase()) ||
-    r.tags.some(t => t.toLowerCase().includes(query.toLowerCase()))
-  );
+  const filtered = REQUIREMENTS
+    .map((requirement) => ({
+      requirement,
+      score: scoreRequirementMatch(requirement, query),
+    }))
+    .filter(({ score }) => score !== Number.POSITIVE_INFINITY)
+    .sort((a, b) => {
+      if (a.score !== b.score) return a.score - b.score;
+
+      const queryRank = normalizeSearchText(query);
+      const aName = normalizeSearchText(a.requirement.name);
+      const bName = normalizeSearchText(b.requirement.name);
+
+      const aPrefix = aName.startsWith(queryRank) ? 0 : 1;
+      const bPrefix = bName.startsWith(queryRank) ? 0 : 1;
+      if (aPrefix !== bPrefix) return aPrefix - bPrefix;
+
+      return a.requirement.name.localeCompare(b.requirement.name, "ko");
+    })
+    .map(({ requirement }) => requirement);
 
   const selectedApp = REQUIREMENTS.find(r => r.id === selectedId) ?? null;
   const result = selectedApp ? checkSpec(data, selectedApp, tier) : null;
@@ -284,7 +403,7 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
             <input
               ref={inputRef}
               className="w-full py-2 pl-8 pr-8 bg-base border border-edge rounded-[8px] text-fg text-[13px] font-[inherit] outline-none transition-colors focus:border-blue placeholder:text-muted"
-              placeholder="게임 또는 프로그램 이름 검색..."
+              placeholder="게임, 프로그램 또는 별칭 검색... (예: 롤, 배그, 포토샵)"
               value={query}
               {...getReferenceProps({
                 onFocus: () => setOpen(true),
@@ -341,6 +460,27 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
             </div>
           )}
         </div>
+
+        {!selectedApp && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] text-muted">빠른 검색</span>
+            {POPULAR_QUERIES.map((item) => (
+              <button
+                key={item}
+                className="px-2.5 py-1 rounded-[999px] border border-edge bg-white/[3%] text-[11px] text-sub font-medium cursor-pointer transition-colors hover:bg-card-hover hover:text-fg hover:border-slate-500"
+                onClick={() => {
+                  setQuery(item);
+                  setOpen(true);
+                  setSelectedId(null);
+                  setActiveIndex(null);
+                  inputRef.current?.focus();
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Body: result or empty hint */}

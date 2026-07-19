@@ -107,6 +107,8 @@ export interface AppRequirement {
   name: string;
   kind: "game" | "program";
   tags: string[];
+  aliases?: string[];
+  sourceName?: string;
   source?: string;
   minimum: SpecRequirement;
   recommended?: SpecRequirement;
