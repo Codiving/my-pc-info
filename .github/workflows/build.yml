@@ -35,22 +35,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # WiX MSI 빌드가 light.exe 단계에서 VBScript 기능을 요구할 수 있다.
-      - name: Enable VBScript for WiX
-        shell: pwsh
-        run: |
-          $cap = Get-WindowsCapability -Online | Where-Object { $_.Name -like 'VBSCRIPT*' } | Select-Object -First 1
-          if ($null -eq $cap) {
-            Write-Host "VBScript capability not found on this runner image; skipping."
-            exit 0
-          }
-
-          if ($cap.State -ne 'Installed') {
-            Add-WindowsCapability -Online -Name $cap.Name
-          } else {
-            Write-Host "VBScript capability already installed."
-          }
-
       # PR / main 푸시: 빌드 검증 + artifact 보관
       - name: Build
         if: "!startsWith(github.ref, 'refs/tags/v')"
@@ -58,13 +42,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pnpm tauri build
-
-      - name: Upload MSI
-        if: "!startsWith(github.ref, 'refs/tags/v')"
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-msi
-          path: src-tauri/target/release/bundle/msi/*.msi
 
       - name: Upload NSIS
         if: "!startsWith(github.ref, 'refs/tags/v')"
