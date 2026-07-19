@@ -577,3 +577,12 @@ mod platform {
 pub fn get_hardware_info() -> Result<HardwareInfo, String> {
     platform::get_hardware_info()
 }
+
+#[tauri::command]
+pub fn open_external_url(url: String) -> Result<(), String> {
+    if !(url.starts_with("http://") || url.starts_with("https://")) {
+        return Err("지원하지 않는 URL 형식입니다".into());
+    }
+
+    webbrowser::open(&url).map_err(|err| err.to_string())
+}

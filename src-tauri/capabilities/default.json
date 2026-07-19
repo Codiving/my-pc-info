@@ -4,7 +4,6 @@
   "description": "Default capability for main window",
   "windows": ["main"],
   "permissions": [
-    "core:default",
-    "opener:allow-default-urls"
+    "core:default"
   ]
 }

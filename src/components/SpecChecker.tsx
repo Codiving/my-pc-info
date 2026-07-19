@@ -11,7 +11,7 @@ import {
   autoUpdate,
   FloatingPortal,
 } from "@floating-ui/react";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
 import { REQUIREMENTS } from "../data/requirements";
 import { checkSpec } from "../utils/specChecker";
 import type { HardwareInfo, SpecCheckResult, JudgmentLevel, ConfidenceLevel } from "../types/hardware";
@@ -136,8 +136,17 @@ function resultSummary(result: SpecCheckResult): { title: string; detail: string
 }
 
 async function openExternalUrl(url: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!("__TAURI_INTERNALS__" in window)) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+
   try {
-    await openUrl(url);
+    await invoke("open_external_url", { url });
   } catch {
     window.open(url, "_blank", "noopener,noreferrer");
   }
