@@ -135,15 +135,54 @@ body {
   color: var(--accent-green);
 }
 
+/* ─── Tab navigation ─── */
+.tab-nav {
+  display: flex;
+  padding: 0 24px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover {
+  color: var(--text-secondary);
+}
+
+.tab-btn.active {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+}
+
 /* ─── Main ─── */
 .app-main {
   flex: 1;
-  padding: 28px;
+  padding: 24px 28px 28px;
   display: flex;
   flex-direction: column;
   gap: 20px;
   overflow-y: auto;
   min-height: 0;
+}
+
+.app-main--checker {
+  overflow: hidden;
 }
 
 /* ─── Cards grid ─── */
@@ -516,12 +555,27 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.spec-checker-top {
+  padding: 14px 18px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: var(--shadow);
-  position: relative;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.spec-checker-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .spec-checker-header {
@@ -548,6 +602,50 @@ body {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+/* ─── Inline game list (replaces absolute dropdown) ─── */
+.spec-game-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-game-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(51,65,85,0.4);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
+}
+
+.spec-game-item:last-child {
+  border-bottom: none;
+}
+
+.spec-game-item:hover,
+.spec-game-item.selected {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.spec-game-list-empty {
+  padding: 20px 18px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.spec-result-wrap {
+  padding: 14px 18px 18px;
 }
 
 .spec-search-wrap {
@@ -636,41 +734,6 @@ body {
   color: var(--text-secondary);
 }
 
-.spec-dropdown {
-  position: absolute;
-  top: calc(100% - 8px);
-  left: 18px;
-  right: 18px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.spec-dropdown-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.1s ease;
-}
-
-.spec-dropdown-item:hover,
-.spec-dropdown-item.selected {
-  background: var(--bg-card-hover);
-  color: var(--text-primary);
-}
-
 .spec-dropdown-icon {
   color: var(--text-muted);
   flex-shrink: 0;
@@ -684,13 +747,6 @@ body {
 .spec-dropdown-tags {
   font-size: 11px;
   color: var(--text-muted);
-}
-
-.spec-dropdown-empty {
-  padding: 12px 14px;
-  font-size: 13px;
-  color: var(--text-muted);
-  text-align: center;
 }
 
 /* Result card */

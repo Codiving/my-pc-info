@@ -178,79 +178,85 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
 
   return (
     <div className="spec-checker">
-      <div className="spec-checker-header">
-        <Gamepad2 size={15} />
-        <span>게임 / 프로그램 사양 검사</span>
-        <span className="spec-checker-hint">추정 판정</span>
-      </div>
-
-      <div className="spec-search-row">
-        <div className="spec-search-wrap">
-          <Search size={14} className="spec-search-icon" />
-          <input
-            ref={inputRef}
-            className="spec-search-input"
-            placeholder="게임 또는 프로그램 이름 검색..."
-            value={query}
-            onChange={e => { setQuery(e.target.value); setOpen(true); setSelectedId(null); }}
-            onFocus={() => setOpen(true)}
-          />
-          {query && (
-            <button
-              className="spec-search-clear"
-              onClick={() => { setQuery(""); setSelectedId(null); setOpen(false); inputRef.current?.focus(); }}
-            >×</button>
-          )}
+      <div className="spec-checker-top">
+        <div className="spec-checker-header">
+          <Gamepad2 size={15} />
+          <span>게임 / 프로그램 사양 검사</span>
+          <span className="spec-checker-hint">추정 판정</span>
         </div>
 
-        {selectedApp && (
-          <div className="spec-tier-toggle">
-            <button
-              className={`spec-tier-btn ${tier === "minimum" ? "active" : ""}`}
-              onClick={() => setTier("minimum")}
-            >최소</button>
-            <button
-              className={`spec-tier-btn ${tier === "recommended" ? "active" : ""} ${!hasRecommended ? "disabled" : ""}`}
-              onClick={() => hasRecommended && setTier("recommended")}
-              disabled={!hasRecommended}
-              title={!hasRecommended ? "권장 사양 데이터 없음" : undefined}
-            >권장</button>
+        <div className="spec-search-row">
+          <div className="spec-search-wrap">
+            <Search size={14} className="spec-search-icon" />
+            <input
+              ref={inputRef}
+              className="spec-search-input"
+              placeholder="게임 또는 프로그램 이름 검색..."
+              value={query}
+              onChange={e => { setQuery(e.target.value); setOpen(true); setSelectedId(null); }}
+              onFocus={() => setOpen(true)}
+            />
+            {query && (
+              <button
+                className="spec-search-clear"
+                onClick={() => { setQuery(""); setSelectedId(null); setOpen(false); inputRef.current?.focus(); }}
+              >×</button>
+            )}
+          </div>
+
+          {selectedApp && (
+            <div className="spec-tier-toggle">
+              <button
+                className={`spec-tier-btn ${tier === "minimum" ? "active" : ""}`}
+                onClick={() => setTier("minimum")}
+              >최소</button>
+              <button
+                className={`spec-tier-btn ${tier === "recommended" ? "active" : ""} ${!hasRecommended ? "disabled" : ""}`}
+                onClick={() => hasRecommended && setTier("recommended")}
+                disabled={!hasRecommended}
+                title={!hasRecommended ? "권장 사양 데이터 없음" : undefined}
+              >권장</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="spec-checker-body">
+        {open && filtered.length > 0 && (
+          <div ref={dropdownRef} className="spec-game-list">
+            {filtered.map(r => (
+              <button
+                key={r.id}
+                className={`spec-game-item ${r.id === selectedId ? "selected" : ""}`}
+                onClick={() => selectApp(r.id, r.name)}
+              >
+                {r.kind === "game"
+                  ? <Gamepad2 size={13} className="spec-dropdown-icon" />
+                  : <Monitor size={13} className="spec-dropdown-icon" />
+                }
+                <span className="spec-dropdown-name">{r.name}</span>
+                <span className="spec-dropdown-tags">{r.tags.join(", ")}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {open && query && filtered.length === 0 && (
+          <div ref={dropdownRef} className="spec-game-list-empty">검색 결과 없음</div>
+        )}
+
+        {result && (
+          <div className="spec-result-wrap">
+            <ResultCard result={result} />
+          </div>
+        )}
+
+        {!result && !open && (
+          <div className="spec-empty-hint">
+            <span>게임이나 프로그램을 검색해 내 PC와 사양을 비교하세요</span>
           </div>
         )}
       </div>
-
-      {open && filtered.length > 0 && (
-        <div ref={dropdownRef} className="spec-dropdown">
-          {filtered.map(r => (
-            <button
-              key={r.id}
-              className={`spec-dropdown-item ${r.id === selectedId ? "selected" : ""}`}
-              onClick={() => selectApp(r.id, r.name)}
-            >
-              {r.kind === "game"
-                ? <Gamepad2 size={13} className="spec-dropdown-icon" />
-                : <Monitor size={13} className="spec-dropdown-icon" />
-              }
-              <span className="spec-dropdown-name">{r.name}</span>
-              <span className="spec-dropdown-tags">{r.tags.join(", ")}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {open && query && filtered.length === 0 && (
-        <div ref={dropdownRef} className="spec-dropdown">
-          <div className="spec-dropdown-empty">검색 결과 없음</div>
-        </div>
-      )}
-
-      {result && <ResultCard result={result} />}
-
-      {!result && !open && (
-        <div className="spec-empty-hint">
-          <span>게임이나 프로그램을 검색해 내 PC와 사양을 비교하세요</span>
-        </div>
-      )}
     </div>
   );
 }
