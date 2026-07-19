@@ -38,6 +38,10 @@
       "icons/icon.ico"
     ],
     "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico"
+      },
       "wix": {
         "language": "ko-KR",
         "bannerPath": "wix/banner.bmp",
