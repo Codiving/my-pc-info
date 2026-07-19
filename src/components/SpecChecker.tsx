@@ -84,14 +84,6 @@ function confidenceLabel(c: ConfidenceLevel): string {
   }
 }
 
-function confidenceClass(c: ConfidenceLevel): string {
-  switch (c) {
-    case "high":   return "bg-white/[4%] text-green border border-edge/70";
-    case "medium": return "bg-white/[4%] text-amber border border-edge/70";
-    case "low":    return "bg-white/[4%] text-muted border border-edge/70";
-  }
-}
-
 function resultCardClass(overall: JudgmentLevel): string {
   switch (overall) {
     case "met":        return "border-edge/80 bg-white/[2%]";
@@ -213,6 +205,14 @@ function SpecBreakdown({ result }: { result: SpecCheckResult }) {
 function ResultCard({ result }: { result: SpecCheckResult }) {
   const summary = resultSummary(result);
   const source = sourceLabel(result.app);
+  const statusTone =
+    result.overall === "met" ? "text-green" :
+    result.overall === "borderline" ? "text-amber" :
+    result.overall === "unmet" ? "text-red" :
+    "text-muted";
+
+  const badgeBase =
+    "inline-flex h-9 items-center justify-center rounded-[10px] border border-edge/70 bg-white/[2%] px-3.5 text-[12px] font-medium leading-none whitespace-nowrap";
 
   return (
     <div className={cn("rounded-[8px] border overflow-hidden animate-slide-down", resultCardClass(result.overall))}>
@@ -224,43 +224,14 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
           </span>
         </div>
         <div className="flex gap-1.5 items-center flex-wrap">
-          <span className={cn("text-[12px] font-bold px-2.5 py-[3px] rounded-[5px]", levelClass(result.overall))}>
+          <span className={cn(badgeBase, statusTone)}>
             {overallLabel(result.overall, result.tier)}
           </span>
-          <span className={cn("text-[11px] px-2 py-[2px] rounded-[4px] font-medium", confidenceClass(result.confidence))}>
+          <span className={cn(badgeBase, "text-muted")}>
             {confidenceLabel(result.confidence)}
           </span>
         </div>
       </div>
-      {result.app.source && (
-        <div className="px-3.5 pb-1">
-          <div className="rounded-[10px] border border-edge/70 bg-white/[2%] px-3 py-2.5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[12px] font-semibold text-sub">공식 출처</div>
-                <p className="mt-0.5 text-[12px] leading-snug text-muted">
-                  이 판정은 아래 공식 문서를 기준으로 계산합니다.
-                </p>
-              </div>
-              <a
-                href={result.app.source}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 shrink-0 rounded-[8px] border border-edge bg-base px-2.5 py-1.5 text-[11px] font-semibold text-sub transition-colors hover:border-edge/80 hover:text-fg"
-                title={result.app.source}
-              >
-                문서 열기
-                <ExternalLink size={11} />
-              </a>
-            </div>
-            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted break-all">
-              <span className="font-medium text-muted">{source}</span>
-              <span className="text-edge">·</span>
-              <span>{result.app.source}</span>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="px-3.5 pb-1">
         <div className="rounded-[8px] border border-edge/60 bg-white/[2%] px-3 py-2">
           <div className="text-[14px] font-semibold text-fg">{summary.title}</div>
@@ -268,6 +239,32 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
         </div>
       </div>
       <SpecBreakdown result={result} />
+      {result.app.source && (
+        <div className="px-3.5 pb-3">
+          <div className="rounded-[8px] border border-edge/60 bg-white/[2%] px-3 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[12px] font-semibold text-sub">출처</div>
+              </div>
+              <a
+                href={result.app.source}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 shrink-0 rounded-[7px] border border-edge bg-base px-2.5 py-1.5 text-[11px] font-semibold text-sub transition-colors hover:border-edge/80 hover:text-fg"
+                title={result.app.source}
+              >
+                문서 열기
+                <ExternalLink size={11} />
+              </a>
+            </div>
+            <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted break-all">
+              <span className="font-medium text-muted">{source}</span>
+              <span className="text-edge">·</span>
+              <span>{result.app.source}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -468,7 +465,7 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
             {POPULAR_QUERIES.map((item) => (
               <button
                 key={item}
-              className="px-2.5 py-1 rounded-[999px] border border-edge bg-white/[2%] text-[11px] text-sub font-medium cursor-pointer transition-colors hover:bg-white/[4%] hover:text-fg hover:border-edge"
+                className="px-2.5 py-1 rounded-[999px] border border-edge bg-white/[2%] text-[11px] text-sub font-medium cursor-pointer transition-colors hover:bg-white/[4%] hover:text-fg hover:border-edge"
                 onClick={() => {
                   setQuery(item);
                   setOpen(true);
