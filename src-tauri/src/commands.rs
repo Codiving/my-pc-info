@@ -524,7 +524,12 @@ mod platform {
 
 #[tauri::command]
 pub fn get_hardware_info() -> Result<HardwareInfo, String> {
-    platform::get_hardware_info()
+    // Tauri's main thread initializes COM with COINIT_APARTMENTTHREADED (WebView2).
+    // wmi crate calls CoInitializeEx(COINIT_MULTITHREADED), causing 0x80010106
+    // (RPC_E_CHANGED_MODE) if called on the same thread. A fresh OS thread avoids this.
+    std::thread::spawn(|| platform::get_hardware_info())
+        .join()
+        .map_err(|_| "스레드 오류".to_string())?
 }
 
 #[tauri::command]
