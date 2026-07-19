@@ -303,11 +303,35 @@ mod platform {
         format!("{y}-{mo}-{d} {h}:{mi}")
     }
 
-    #[cfg(target_os = "windows")]
-    fn get_uptime_hours() -> u64 {
-        #[link(name = "kernel32")]
-        extern "system" { fn GetTickCount64() -> u64; }
-        unsafe { GetTickCount64() / 3_600_000 }
+    fn uptime_hours_from_boot(wmi_dt: &str) -> u64 {
+        // WMI datetime: YYYYMMDDHHmmss.ffffff±UUU (UUU = UTC offset in minutes)
+        if wmi_dt.len() < 14 { return 0; }
+        let p = |s: &str| s.parse::<i64>().unwrap_or(0);
+        let year  = p(&wmi_dt[0..4]);
+        let month = p(&wmi_dt[4..6]);
+        let day   = p(&wmi_dt[6..8]);
+        let hour  = p(&wmi_dt[8..10]);
+        let min   = p(&wmi_dt[10..12]);
+        let sec   = p(&wmi_dt[12..14]);
+        let offset_sign: i64 = if wmi_dt.as_bytes().get(21) == Some(&b'-') { -1 } else { 1 };
+        let offset_mins: i64 = wmi_dt.get(22..).and_then(|s| s.parse().ok()).unwrap_or(0) * offset_sign;
+
+        // Days since Unix epoch via proleptic Gregorian calendar
+        let (y, m) = if month <= 2 { (year - 1, month + 9) } else { (year, month - 3) };
+        let era = y.div_euclid(400);
+        let yoe = y - era * 400;
+        let doy = (153 * m + 2) / 5 + day - 1;
+        let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+        let boot_secs = (era * 146097 + doe - 719468) * 86400
+            + hour * 3600 + min * 60 + sec - offset_mins * 60;
+
+        let now_secs = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs() as i64;
+
+        let diff = now_secs - boot_secs;
+        if diff > 0 { diff as u64 / 3600 } else { 0 }
     }
 
     pub fn get_hardware_info() -> Result<HardwareInfo, String> {
@@ -394,7 +418,7 @@ mod platform {
             architecture: o.OSArchitecture.unwrap_or_else(|| "64비트".into()),
             install_date: o.InstallDate.as_deref().map(format_wmi_date).unwrap_or_default(),
             last_boot: o.LastBootUpTime.as_deref().map(format_wmi_date).unwrap_or_default(),
-            uptime_hours: get_uptime_hours(),
+            uptime_hours: uptime_hours_from_boot(o.LastBootUpTime.as_deref().unwrap_or("")),
         });
 
         // ── Computer System ────────────────────────────────────────────────────
