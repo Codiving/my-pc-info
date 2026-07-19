@@ -20,3 +20,7 @@ pnpm tauri dev   # Windows 환경 필요
 Mac에서는 빌드 불가. GitHub Actions CI로 진행.
 
 → [CI / Release 가이드](AGENTS.md)
+
+## 커밋 규칙
+
+- `Co-Authored-By` 등 불필요한 트레일러는 커밋 메시지에 포함하지 않는다.
