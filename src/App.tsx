@@ -158,7 +158,7 @@ export default function App() {
             onClick={() => setActiveTab("checker")}
           >
             <Gamepad2 size={14} />
-            게임 사양 검사
+            게임 / 프로그램 사양 검사
           </button>
         </nav>
       )}
