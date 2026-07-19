@@ -42,9 +42,10 @@
       "nsis": {
         "installerIcon": "icons/icon.ico",
         "uninstallerIcon": "icons/icon.ico",
-        "headerImage": "installer/header.png",
-        "uninstallerHeaderImage": "installer/header.png",
-        "sidebarImage": "installer/sidebar.png"
+        "headerImage": "installer/header.bmp",
+        "uninstallerHeaderImage": "installer/header.bmp",
+        "sidebarImage": "installer/sidebar.bmp",
+        "template": "installer/template.nsi"
       }
     }
   },
