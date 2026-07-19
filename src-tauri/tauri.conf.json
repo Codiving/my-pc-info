@@ -41,7 +41,8 @@
       "wix": {
         "language": "ko-KR",
         "bannerPath": "wix/banner.bmp",
-        "dialogImagePath": "wix/dialog.bmp"
+        "dialogImagePath": "wix/dialog.bmp",
+        "fragmentPaths": ["wix/icon.wxs"]
       }
     }
   },
