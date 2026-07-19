@@ -180,7 +180,7 @@ export default function App() {
 
             {activeTab === "specs" && (
               <>
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                   <HardwareCard
                     Icon={Cpu}
                     title="CPU"
@@ -216,9 +216,8 @@ export default function App() {
                     ] : []}
                     copyText={ram ? `[RAM] ${ram.total_gb.toFixed(0)}GB ${ram.memory_type} ${ram.speed_mhz}MHz` : ""}
                   />
+                  <StorageCard drives={data.drives} />
                 </div>
-
-                <StorageCard drives={data.drives} />
                 <AlertsSection data={data} />
                 <DetailPanel data={data} />
               </>

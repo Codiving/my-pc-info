@@ -7,8 +7,8 @@ interface StorageCardProps {
   drives: DriveInfo[];
 }
 
-function UsageBar({ percent, warn }: { percent: number; warn: boolean }) {
-  const color = percent >= 90 ? "var(--color-red)" : warn ? "#f59e0b" : "var(--color-green)";
+function UsageBar({ percent, critical }: { percent: number; critical: boolean }) {
+  const color = critical ? "var(--color-red)" : "#f97316";
   return (
     <div className="flex-1 h-[5px] bg-white/[8%] rounded-full overflow-hidden">
       <div
@@ -37,7 +37,7 @@ export function StorageCard({ drives }: StorageCardProps) {
     <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-edge/80 shadow-[0_2px_12px_rgba(0,0,0,0.22)] hover:shadow-[0_3px_14px_rgba(0,0,0,0.26)]">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 text-muted bg-white/[4%] border border-edge/60">
+          <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 bg-white/[4%] border border-edge/60" style={{ color: "#f97316" }}>
             <HardDrive size={22} />
           </div>
           <div className="text-[16px] font-bold text-fg">저장장치</div>
@@ -58,8 +58,7 @@ export function StorageCard({ drives }: StorageCardProps) {
 
       <div className="flex flex-col gap-3.5">
         {drives.map((drive) => {
-          const warn = drive.free_gb / drive.total_gb < 0.1;
-          const critical = drive.free_gb / drive.total_gb < 0.05;
+          const critical = drive.used_percent >= 85;
           return (
             <div key={drive.letter} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between gap-2">
@@ -76,13 +75,13 @@ export function StorageCard({ drives }: StorageCardProps) {
                   {drive.label && <span className="text-[13px] text-muted">{drive.label}</span>}
                 </div>
                 <div className="text-[13px] whitespace-nowrap">
-                  <span className={cn("font-semibold", critical ? "text-red" : warn ? "text-amber" : "text-sub")}>
+                  <span className={cn("font-semibold", critical ? "text-red" : "text-sub")}>
                     {drive.free_gb.toFixed(0)}GB 여유
                   </span>
                   <span className="text-muted"> / {drive.total_gb.toFixed(0)}GB</span>
                 </div>
               </div>
-              <UsageBar percent={drive.used_percent} warn={warn} />
+              <UsageBar percent={drive.used_percent} critical={critical} />
               <div className="text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap max-w-[70%]">
                 {drive.model || drive.file_system}
               </div>
