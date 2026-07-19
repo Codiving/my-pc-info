@@ -280,6 +280,9 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
               <span className="text-edge">·</span>
               <span>{result.app.source}</span>
             </div>
+            <p className="mt-2 text-[11px] leading-snug text-muted/80">
+              사양과 지원 여부는 바뀔 수 있습니다. 최신 정보는 직접 다시 확인하세요.
+            </p>
           </div>
         </div>
       )}
