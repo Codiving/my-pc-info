@@ -38,7 +38,18 @@ jobs:
       # WiX MSI 빌드가 light.exe 단계에서 VBScript 기능을 요구할 수 있다.
       - name: Enable VBScript for WiX
         shell: pwsh
-        run: dism /online /Enable-Feature /FeatureName:VBScript /All /NoRestart
+        run: |
+          $cap = Get-WindowsCapability -Online | Where-Object { $_.Name -like 'VBSCRIPT*' } | Select-Object -First 1
+          if ($null -eq $cap) {
+            Write-Host "VBScript capability not found on this runner image; skipping."
+            exit 0
+          }
+
+          if ($cap.State -ne 'Installed') {
+            Add-WindowsCapability -Online -Name $cap.Name
+          } else {
+            Write-Host "VBScript capability already installed."
+          }
 
       # PR / main 푸시: 빌드 검증 + artifact 보관
       - name: Build
