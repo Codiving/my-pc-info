@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "My PC Info",
+  "productName": "내 PC 한눈에",
   "version": "0.1.0",
   "identifier": "com.mypc.info",
   "build": {
