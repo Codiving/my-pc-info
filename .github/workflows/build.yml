@@ -45,9 +45,8 @@ jobs:
       - name: Rename artifacts
         shell: pwsh
         run: |
-          $msiDir  = "src-tauri/target/release/bundle/msi"
           $nsisDir = "src-tauri/target/release/bundle/nsis"
-          foreach ($f in @(Get-ChildItem $msiDir) + @(Get-ChildItem $nsisDir)) {
+          foreach ($f in @(Get-ChildItem $nsisDir)) {
             $n = $f.Name -replace '내 PC 한눈에', '내_PC_한눈에'
             $n = $n      -replace '_x64(?:_[a-z]{2,3}-[A-Z]{2})?(?:-setup)?', ''
             if ($n -ne $f.Name) {
@@ -56,13 +55,6 @@ jobs:
           }
 
       # PR / main 푸시: 빌드 검증 + artifact 보관
-      - name: Upload MSI
-        if: "!startsWith(github.ref, 'refs/tags/v')"
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-msi
-          path: src-tauri/target/release/bundle/msi/*.msi
-
       - name: Upload NSIS
         if: "!startsWith(github.ref, 'refs/tags/v')"
         uses: actions/upload-artifact@v4
@@ -82,13 +74,10 @@ jobs:
           $tag     = "${{ github.ref_name }}"
           $repo    = "${{ github.repository }}"
           $baseUrl = "https://github.com/$repo/releases/download/$tag"
-          $msiDir  = "src-tauri/target/release/bundle/msi"
           $nsisDir = "src-tauri/target/release/bundle/nsis"
 
-          # 자동 업데이터용 latest.json 생성 (NSIS → MSI 순으로 우선)
-          $sigFile = @(Get-ChildItem $nsisDir -Filter "*.nsis.zip.sig") +
-                     @(Get-ChildItem $msiDir  -Filter "*.msi.zip.sig") |
-                     Select-Object -First 1
+          # 자동 업데이터용 latest.json 생성
+          $sigFile = Get-ChildItem $nsisDir -Filter "*.nsis.zip.sig" | Select-Object -First 1
           $zipName = $sigFile.Name -replace '\.sig$', ''
           $sig     = (Get-Content $sigFile.FullName -Raw -Encoding UTF8).Trim()
 
@@ -106,7 +95,6 @@ jobs:
 
           # 릴리즈 생성 및 파일 업로드
           $uploadFiles  = @()
-          $uploadFiles += (Get-ChildItem $msiDir).FullName
           $uploadFiles += (Get-ChildItem $nsisDir).FullName
           $uploadFiles += (Resolve-Path "latest.json").Path
 
