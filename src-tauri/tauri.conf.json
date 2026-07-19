@@ -39,7 +39,9 @@
     ],
     "windows": {
       "wix": {
-        "language": "ko-KR"
+        "language": "ko-KR",
+        "bannerPath": "wix/banner.bmp",
+        "dialogImagePath": "wix/dialog.bmp"
       }
     }
   },
