@@ -124,9 +124,9 @@ mod platform {
     use std::collections::HashMap;
     use wmi::{COMLibrary, WMIConnection};
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32Processor {
+    struct Win32_Processor {
         Name: Option<String>,
         Manufacturer: Option<String>,
         NumberOfCores: Option<u32>,
@@ -138,9 +138,9 @@ mod platform {
         VirtualizationFirmwareEnabled: Option<bool>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32VideoController {
+    struct Win32_VideoController {
         Name: Option<String>,
         AdapterRAM: Option<u64>,
         DriverVersion: Option<String>,
@@ -150,9 +150,9 @@ mod platform {
         AdapterCompatibility: Option<String>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32PhysicalMemory {
+    struct Win32_PhysicalMemory {
         Capacity: Option<u64>,
         Speed: Option<u32>,
         SMBIOSMemoryType: Option<u32>,
@@ -160,9 +160,9 @@ mod platform {
         Manufacturer: Option<String>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32OperatingSystem {
+    struct Win32_OperatingSystem {
         Caption: Option<String>,
         Version: Option<String>,
         BuildNumber: Option<String>,
@@ -173,18 +173,18 @@ mod platform {
         LastBootUpTime: Option<String>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32ComputerSystem {
+    struct Win32_ComputerSystem {
         Name: Option<String>,
         Manufacturer: Option<String>,
         Model: Option<String>,
         PCSystemType: Option<u32>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32LogicalDisk {
+    struct Win32_LogicalDisk {
         DeviceID: Option<String>,
         VolumeName: Option<String>,
         Size: Option<u64>,
@@ -193,32 +193,32 @@ mod platform {
         FileSystem: Option<String>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32DiskDrive {
+    struct Win32_DiskDrive {
         Model: Option<String>,
         InterfaceType: Option<String>,
         MediaType: Option<String>,
         Index: Option<u32>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32BaseBoard {
+    struct Win32_BaseBoard {
         Manufacturer: Option<String>,
         Product: Option<String>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32BIOS {
+    struct Win32_BIOS {
         SMBIOSBIOSVersion: Option<String>,
         ReleaseDate: Option<String>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32NetworkAdapter {
+    struct Win32_NetworkAdapter {
         Name: Option<String>,
         NetConnectionStatus: Option<u16>,
         MACAddress: Option<String>,
@@ -228,17 +228,17 @@ mod platform {
         PhysicalAdapter: Option<bool>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32NetworkAdapterConfiguration {
+    struct Win32_NetworkAdapterConfiguration {
         IPAddress: Option<Vec<String>>,
         MACAddress: Option<String>,
         IPEnabled: Option<bool>,
     }
 
-    #[allow(non_snake_case)]
+    #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
-    struct Win32Battery {
+    struct Win32_Battery {
         EstimatedChargeRemaining: Option<u32>,
         BatteryStatus: Option<u32>,
         DesignCapacity: Option<u32>,
@@ -318,7 +318,7 @@ mod platform {
         let mut wmi_errors: Vec<String> = Vec::new();
 
         // ── CPU ────────────────────────────────────────────────────────────────
-        let cpu = match wmi_con.query::<Win32Processor>() {
+        let cpu = match wmi_con.query::<Win32_Processor>() {
             Err(e) => { wmi_errors.push(format!("CPU 쿼리 실패: {e}")); None }
             Ok(v) => v.into_iter().next().and_then(|p| {
                 let name = p.Name.as_deref()?.trim().to_string();
@@ -337,7 +337,7 @@ mod platform {
         };
 
         // ── GPU ────────────────────────────────────────────────────────────────
-        let gpus: Vec<GpuInfo> = match wmi_con.query::<Win32VideoController>() {
+        let gpus: Vec<GpuInfo> = match wmi_con.query::<Win32_VideoController>() {
             Err(e) => { wmi_errors.push(format!("GPU 쿼리 실패: {e}")); vec![] }
             Ok(v) => v.into_iter().filter_map(|g| {
                 let name = g.Name.as_deref()?.trim().to_string();
@@ -365,11 +365,11 @@ mod platform {
         }
 
         // ── RAM ────────────────────────────────────────────────────────────────
-        let ram_modules: Vec<Win32PhysicalMemory> = match wmi_con.query() {
+        let ram_modules: Vec<Win32_PhysicalMemory> = match wmi_con.query() {
             Err(e) => { wmi_errors.push(format!("RAM 쿼리 실패: {e}")); vec![] }
             Ok(v) => v,
         };
-        let os_entries: Vec<Win32OperatingSystem> = match wmi_con.query() {
+        let os_entries: Vec<Win32_OperatingSystem> = match wmi_con.query() {
             Err(e) => { wmi_errors.push(format!("OS 쿼리 실패: {e}")); vec![] }
             Ok(v) => v,
         };
@@ -410,7 +410,7 @@ mod platform {
         });
 
         // ── Computer System ────────────────────────────────────────────────────
-        let cs: Vec<Win32ComputerSystem> = match wmi_con.query() {
+        let cs: Vec<Win32_ComputerSystem> = match wmi_con.query() {
             Err(e) => { wmi_errors.push(format!("ComputerSystem 쿼리 실패: {e}")); vec![] }
             Ok(v) => v,
         };
@@ -419,8 +419,8 @@ mod platform {
         let is_laptop = cs_entry.as_ref().and_then(|c| c.PCSystemType) == Some(2);
 
         // ── Storage ────────────────────────────────────────────────────────────
-        let phys_disks: Vec<Win32DiskDrive> = wmi_con.query().unwrap_or_default();
-        let logical_disks: Vec<Win32LogicalDisk> = match wmi_con.query() {
+        let phys_disks: Vec<Win32_DiskDrive> = wmi_con.query().unwrap_or_default();
+        let logical_disks: Vec<Win32_LogicalDisk> = match wmi_con.query() {
             Err(e) => { wmi_errors.push(format!("LogicalDisk 쿼리 실패: {e}")); vec![] }
             Ok(v) => v,
         };
@@ -465,8 +465,8 @@ mod platform {
             .collect();
 
         // ── Motherboard / BIOS ─────────────────────────────────────────────────
-        let boards: Vec<Win32BaseBoard> = wmi_con.query().unwrap_or_default();
-        let bioses: Vec<Win32BIOS>      = wmi_con.query().unwrap_or_default();
+        let boards: Vec<Win32_BaseBoard> = wmi_con.query().unwrap_or_default();
+        let bioses: Vec<Win32_BIOS>      = wmi_con.query().unwrap_or_default();
         let motherboard = boards.into_iter().next().map(|b| {
             let bios = bioses.into_iter().next();
             MotherboardInfo {
@@ -478,8 +478,8 @@ mod platform {
         });
 
         // ── Network ────────────────────────────────────────────────────────────
-        let adapters: Vec<Win32NetworkAdapter> = wmi_con.query().unwrap_or_default();
-        let configs:  Vec<Win32NetworkAdapterConfiguration> = wmi_con.query().unwrap_or_default();
+        let adapters: Vec<Win32_NetworkAdapter> = wmi_con.query().unwrap_or_default();
+        let configs:  Vec<Win32_NetworkAdapterConfiguration> = wmi_con.query().unwrap_or_default();
 
         let mut ip_by_mac: HashMap<String, String> = HashMap::new();
         for cfg in &configs {
@@ -514,7 +514,7 @@ mod platform {
             .collect();
 
         // ── Battery ────────────────────────────────────────────────────────────
-        let batteries: Vec<Win32Battery> = wmi_con.query().unwrap_or_default();
+        let batteries: Vec<Win32_Battery> = wmi_con.query().unwrap_or_default();
         let battery = batteries.into_iter().next().map(|b| {
             let health = match (b.DesignCapacity, b.FullChargeCapacity) {
                 (Some(d), Some(f)) if d > 0 => Some((f * 100 / d) as u32),
