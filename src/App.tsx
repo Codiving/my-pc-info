@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop } from "lucide-react";
+import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop, Gamepad2 } from "lucide-react";
 import { HardwareCard } from "./components/HardwareCard";
 import { StorageCard } from "./components/StorageCard";
 import { AlertsSection } from "./components/AlertsSection";
+import { SpecChecker } from "./components/SpecChecker";
 import { DetailPanel } from "./components/DetailPanel";
 import { useHardwareInfo } from "./hooks/useHardwareInfo";
 import type { HardwareInfo } from "./types/hardware";
@@ -72,6 +73,7 @@ function OsBar({ data }: { data: HardwareInfo }) {
 export default function App() {
   const { data, loading, error, refresh, copyToClipboard, copied } = useHardwareInfo();
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"specs" | "checker">("specs");
 
   const isWindowsOnly = error === "WINDOWS_ONLY";
 
@@ -121,7 +123,26 @@ export default function App() {
         )}
       </header>
 
-      <main className="app-main">
+      {data && !loading && (
+        <nav className="tab-nav">
+          <button
+            className={`tab-btn ${activeTab === "specs" ? "active" : ""}`}
+            onClick={() => setActiveTab("specs")}
+          >
+            <Monitor size={14} />
+            내 PC 사양
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "checker" ? "active" : ""}`}
+            onClick={() => setActiveTab("checker")}
+          >
+            <Gamepad2 size={14} />
+            게임 사양 검사
+          </button>
+        </nav>
+      )}
+
+      <main className={`app-main${activeTab === "checker" && data && !loading ? " app-main--checker" : ""}`}>
         {loading && <LoadingScreen />}
         {isWindowsOnly && <WindowsOnlyScreen />}
         {error && !isWindowsOnly && !loading && <ErrorScreen message={error} onRetry={handleRefresh} />}
@@ -130,51 +151,59 @@ export default function App() {
           <>
             <OsBar data={data} />
 
-            <div className="cards-grid">
-              <HardwareCard
-                Icon={Cpu}
-                title="CPU"
-                color="#3b82f6"
-                mainValue={cpu?.name ?? null}
-                usagePercent={cpu?.usage_percent}
-                specs={cpu ? [
-                  { label: "코어 / 스레드", value: `${cpu.cores}C / ${cpu.threads}T` },
-                  { label: "최대 클럭", value: `${(cpu.max_clock_mhz / 1000).toFixed(1)} GHz` },
-                ] : []}
-                copyText={cpu ? `[CPU] ${cpu.name} (${cpu.cores}코어/${cpu.threads}스레드 ${(cpu.max_clock_mhz / 1000).toFixed(1)}GHz)` : ""}
-              />
+            {activeTab === "specs" && (
+              <>
+                <div className="cards-grid">
+                  <HardwareCard
+                    Icon={Cpu}
+                    title="CPU"
+                    color="#3b82f6"
+                    mainValue={cpu?.name ?? null}
+                    usagePercent={cpu?.usage_percent}
+                    specs={cpu ? [
+                      { label: "코어 / 스레드", value: `${cpu.cores}C / ${cpu.threads}T` },
+                      { label: "최대 클럭", value: `${(cpu.max_clock_mhz / 1000).toFixed(1)} GHz` },
+                    ] : []}
+                    copyText={cpu ? `[CPU] ${cpu.name} (${cpu.cores}코어/${cpu.threads}스레드 ${(cpu.max_clock_mhz / 1000).toFixed(1)}GHz)` : ""}
+                  />
 
-              <HardwareCard
-                Icon={Monitor}
-                title="GPU"
-                color="#a855f7"
-                mainValue={gpu?.name ?? null}
-                specs={gpu ? [
-                  { label: "VRAM", value: gpu.vram_gb != null ? `${gpu.vram_gb.toFixed(0)} GB` : "감지 불가" },
-                  { label: "드라이버", value: gpu.driver_version || "N/A" },
-                ] : []}
-                copyText={gpu ? `[GPU] ${gpu.name}${gpu.vram_gb != null ? ` (VRAM ${gpu.vram_gb.toFixed(0)}GB)` : ""}` : ""}
-              />
+                  <HardwareCard
+                    Icon={Monitor}
+                    title="GPU"
+                    color="#a855f7"
+                    mainValue={gpu?.name ?? null}
+                    specs={gpu ? [
+                      { label: "VRAM", value: gpu.vram_gb != null ? `${gpu.vram_gb.toFixed(0)} GB` : "감지 불가" },
+                      { label: "드라이버", value: gpu.driver_version || "N/A" },
+                    ] : []}
+                    copyText={gpu ? `[GPU] ${gpu.name}${gpu.vram_gb != null ? ` (VRAM ${gpu.vram_gb.toFixed(0)}GB)` : ""}` : ""}
+                  />
 
-              <HardwareCard
-                Icon={Database}
-                title="RAM"
-                color="#22c55e"
-                mainValue={ram ? `${ram.used_gb.toFixed(1)} / ${ram.total_gb.toFixed(0)} GB` : null}
-                usagePercent={ram?.usage_percent}
-                specs={ram ? [
-                  { label: "규격", value: `${ram.memory_type} ${ram.speed_mhz} MHz` },
-                  { label: "슬롯", value: `${ram.slots_used}개 사용` },
-                ] : []}
-                copyText={ram ? `[RAM] ${ram.total_gb.toFixed(0)}GB ${ram.memory_type} ${ram.speed_mhz}MHz` : ""}
-              />
-            </div>
+                  <HardwareCard
+                    Icon={Database}
+                    title="RAM"
+                    color="#22c55e"
+                    mainValue={ram ? `${ram.used_gb.toFixed(1)} / ${ram.total_gb.toFixed(0)} GB` : null}
+                    usagePercent={ram?.usage_percent}
+                    specs={ram ? [
+                      { label: "규격", value: `${ram.memory_type} ${ram.speed_mhz} MHz` },
+                      { label: "슬롯", value: `${ram.slots_used}개 사용` },
+                    ] : []}
+                    copyText={ram ? `[RAM] ${ram.total_gb.toFixed(0)}GB ${ram.memory_type} ${ram.speed_mhz}MHz` : ""}
+                  />
+                </div>
 
-            <StorageCard drives={data.drives} />
+                <StorageCard drives={data.drives} />
 
-            <AlertsSection data={data} />
+                <AlertsSection data={data} />
 
-            <DetailPanel data={data} />
+                <DetailPanel data={data} />
+              </>
+            )}
+
+            {activeTab === "checker" && (
+              <SpecChecker data={data} />
+            )}
           </>
         )}
       </main>

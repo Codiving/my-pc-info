@@ -260,6 +260,26 @@ mod platform {
         else { "Unknown".into() }
     }
 
+    fn detect_integrated_gpu(name: &str, manufacturer: &str) -> bool {
+        let n = name.to_lowercase();
+        let m = manufacturer.to_lowercase();
+
+        if m == "intel" {
+            return !n.contains("arc");
+        }
+
+        if m == "amd" {
+            return n.contains("vega")
+                || n.contains("radeon graphics")
+                || n.contains("radeon(tm) graphics")
+                || n.contains("integrated graphics")
+                || n.contains("apu")
+                || n.contains("graphics");
+        }
+
+        false
+    }
+
     fn detect_disk_type(model: &str, interface: &str, media: &str) -> String {
         let m = model.to_uppercase();
         let i = interface.to_uppercase();
@@ -316,7 +336,7 @@ mod platform {
                 let vram_gb = g.AdapterRAM.filter(|&v| v > 512 * 1024 * 1024)
                     .map(|v| (v as f64 / (1u64 << 30) as f64 * 10.0).round() / 10.0);
                 let mfr = detect_gpu_manufacturer(&g.Name, g.AdapterCompatibility.as_deref());
-                let is_integrated = mfr == "Intel" && !g.Name.to_lowercase().contains("arc");
+                let is_integrated = detect_integrated_gpu(&g.Name, &mfr);
                 let resolution = match (g.CurrentHorizontalResolution, g.CurrentVerticalResolution) {
                     (Some(w), Some(h)) if w > 0 => format!("{w}×{h}"),
                     _ => String::new(),
