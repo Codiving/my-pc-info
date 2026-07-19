@@ -1,22 +1,23 @@
 import { useState } from "react";
 import { Cpu, Monitor, Database, HardDrive, CircuitBoard, Globe, Wifi, Battery, ChevronDown } from "lucide-react";
 import type { HardwareInfo } from "../types/hardware";
+import { cn } from "../utils/cn";
 
 function Row({ label, value }: { label: string; value: string | number | boolean | null | undefined }) {
   if (value == null || value === "" || value === 0) return null;
   const display = typeof value === "boolean" ? (value ? "지원" : "미지원") : String(value);
   return (
-    <div className="detail-row">
-      <span>{label}</span>
-      <span>{display}</span>
+    <div className="flex justify-between items-center py-[7px] border-b border-edge/50 last:border-b-0">
+      <span className="text-muted text-[13px]">{label}</span>
+      <span className="text-fg text-[13px] font-medium text-right max-w-[60%] break-keep">{display}</span>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="detail-section">
-      <h3>{title}</h3>
+    <div>
+      <h3 className="text-[12px] font-semibold text-muted uppercase tracking-[0.8px] mb-2.5">{title}</h3>
       {children}
     </div>
   );
@@ -30,15 +31,25 @@ function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
   onToggle: () => void;
 }) {
   return (
-    <div className="accordion-item">
-      <button className="accordion-toggle" onClick={onToggle}>
-        <span className="accordion-label">
+    <div className="rounded-[8px]">
+      <button
+        className="w-full px-3.5 py-3 bg-white/[3%] text-sub text-[13px] font-semibold cursor-pointer flex items-center justify-between font-[inherit] rounded-[8px] transition-all duration-150 hover:bg-white/[6%] hover:text-fg"
+        onClick={onToggle}
+      >
+        <span className="flex items-center gap-2">
           <Icon size={15} />
           {label}
         </span>
-        <ChevronDown size={15} className={`accordion-chevron ${open ? "open" : ""}`} />
+        <ChevronDown
+          size={15}
+          className={cn("transition-transform duration-200 text-muted", open && "rotate-180")}
+        />
       </button>
-      {open && <div className="accordion-content">{children}</div>}
+      {open && (
+        <div className="px-3.5 pt-1 pb-3 flex flex-col gap-4 animate-slide-down">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -61,10 +72,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
 
   const allOpen = availableKeys.length > 0 && availableKeys.every((k) => openItems.has(k));
 
-  const toggleAll = () => {
-    setOpenItems(allOpen ? new Set() : new Set(availableKeys));
-  };
-
+  const toggleAll = () => setOpenItems(allOpen ? new Set() : new Set(availableKeys));
   const toggleItem = (key: string) => {
     setOpenItems((prev) => {
       const next = new Set(prev);
@@ -75,21 +83,30 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
   };
 
   return (
-    <div className="detail-wrapper">
-      <div className="detail-header">
-        <button className="detail-toggle" onClick={() => setPanelOpen(!panelOpen)}>
-          <ChevronDown size={16} className={`chevron ${panelOpen ? "open" : ""}`} />
+    <div className="bg-card border border-edge rounded-[14px] shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex flex-col">
+      <div className="flex items-center justify-between px-5">
+        <button
+          className="flex-1 py-4 bg-transparent text-fg text-[15px] font-bold cursor-pointer flex items-center gap-2 font-[inherit] transition-colors"
+          onClick={() => setPanelOpen(!panelOpen)}
+        >
+          <ChevronDown
+            size={16}
+            className={cn("transition-transform duration-200 text-muted", panelOpen && "rotate-180")}
+          />
           <span>상세 정보</span>
         </button>
         {panelOpen && (
-          <button className="expand-all-btn" onClick={toggleAll}>
+          <button
+            className="px-3 py-[5px] rounded-[8px] border border-edge bg-transparent text-muted text-[12px] font-medium cursor-pointer transition-all duration-150 whitespace-nowrap hover:border-blue hover:text-blue hover:bg-blue/[8%] font-[inherit]"
+            onClick={toggleAll}
+          >
             {allOpen ? "전체 접기" : "전체 열기"}
           </button>
         )}
       </div>
 
       {panelOpen && (
-        <div className="detail-content">
+        <div className="px-4 pb-4 pt-3 grid grid-cols-1 min-[520px]:grid-cols-2 gap-2 border-t border-edge animate-slide-down">
           {cpu && (
             <AccordionItem icon={Cpu} label="CPU" open={openItems.has("cpu")} onToggle={() => toggleItem("cpu")}>
               <Section title="프로세서">
@@ -135,8 +152,8 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
               {ram.slots.length > 0 && (
                 <Section title="슬롯별 정보">
                   {ram.slots.map((slot, i) => (
-                    <div key={i} className="sub-card">
-                      <div className="sub-card-title">{slot.slot}</div>
+                    <div key={i} className="bg-white/[3%] rounded-[8px] px-3 py-2.5 border border-edge/50 mt-2 first:mt-0">
+                      <div className="text-[11px] font-semibold text-muted uppercase tracking-[0.5px] mb-2">{slot.slot}</div>
                       <Row label="용량" value={`${slot.capacity_gb.toFixed(0)} GB`} />
                       <Row label="규격" value={slot.memory_type} />
                       <Row label="속도" value={`${slot.speed_mhz} MHz`} />

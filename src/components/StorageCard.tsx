@@ -1,16 +1,20 @@
 import { HardDrive, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import type { DriveInfo } from "../types/hardware";
+import { cn } from "../utils/cn";
 
 interface StorageCardProps {
   drives: DriveInfo[];
 }
 
 function UsageBar({ percent, warn }: { percent: number; warn: boolean }) {
-  const color = percent >= 90 ? "var(--accent-red)" : warn ? "#f59e0b" : "var(--accent-green)";
+  const color = percent >= 90 ? "var(--color-red)" : warn ? "#f59e0b" : "var(--color-green)";
   return (
-    <div className="usage-bar-track">
-      <div className="usage-bar-fill" style={{ width: `${percent}%`, background: color }} />
+    <div className="flex-1 h-[5px] bg-white/[8%] rounded-full overflow-hidden">
+      <div
+        className="h-full rounded-sm transition-[width] duration-[400ms]"
+        style={{ width: `${percent}%`, background: color }}
+      />
     </div>
   );
 }
@@ -30,16 +34,21 @@ export function StorageCard({ drives }: StorageCardProps) {
   if (drives.length === 0) return null;
 
   return (
-    <div className="card storage-card">
-      <div className="card-header">
-        <div className="card-header-left">
-          <div className="card-icon" style={{ color: "#f59e0b", backgroundColor: "#f59e0b20" }}>
+    <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-slate-500 shadow-[0_4px_24px_rgba(0,0,0,0.4)] hover:shadow-[0_6px_32px_rgba(0,0,0,0.5)]">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 text-amber bg-amber/[12%]">
             <HardDrive size={22} />
           </div>
-          <div className="card-title">저장장치</div>
+          <div className="text-[16px] font-bold text-fg">저장장치</div>
         </div>
         <button
-          className={`copy-btn-icon ${justCopied ? "copied" : ""}`}
+          className={cn(
+            "w-8 h-8 flex items-center justify-center rounded-[8px] border transition-all duration-150 shrink-0 cursor-pointer",
+            justCopied
+              ? "border-green text-green bg-green/[8%]"
+              : "border-edge text-muted hover:border-blue hover:text-blue hover:bg-blue/[8%]"
+          )}
           onClick={handleCopy}
           title="저장장치 정보 복사"
         >
@@ -47,29 +56,35 @@ export function StorageCard({ drives }: StorageCardProps) {
         </button>
       </div>
 
-      <div className="drive-list">
+      <div className="flex flex-col gap-3.5">
         {drives.map((drive) => {
           const warn = drive.free_gb / drive.total_gb < 0.1;
           const critical = drive.free_gb / drive.total_gb < 0.05;
           return (
-            <div key={drive.letter} className="drive-row">
-              <div className="drive-header-row">
-                <div className="drive-label-group">
-                  <span className="drive-letter">{drive.letter}</span>
-                  {drive.is_boot && <span className="drive-boot-badge">부팅</span>}
-                  <span className="drive-type-badge">{drive.drive_type}</span>
-                  {drive.label && <span className="drive-name">{drive.label}</span>}
+            <div key={drive.letter} className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[15px] font-bold text-fg">{drive.letter}</span>
+                  {drive.is_boot && (
+                    <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-blue/15 text-blue border border-blue/30">
+                      부팅
+                    </span>
+                  )}
+                  <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-amber/[12%] text-amber">
+                    {drive.drive_type}
+                  </span>
+                  {drive.label && <span className="text-[13px] text-muted">{drive.label}</span>}
                 </div>
-                <div className="drive-space-info">
-                  <span className={critical ? "drive-free critical" : warn ? "drive-free warn" : "drive-free"}>
+                <div className="text-[13px] whitespace-nowrap">
+                  <span className={cn("font-semibold", critical ? "text-red" : warn ? "text-amber" : "text-sub")}>
                     {drive.free_gb.toFixed(0)}GB 여유
                   </span>
-                  <span className="drive-total"> / {drive.total_gb.toFixed(0)}GB</span>
+                  <span className="text-muted"> / {drive.total_gb.toFixed(0)}GB</span>
                 </div>
               </div>
               <UsageBar percent={drive.used_percent} warn={warn} />
-              <div className="drive-meta-row">
-                <span className="drive-model">{drive.model || drive.file_system}</span>
+              <div className="text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap max-w-[70%]">
+                {drive.model || drive.file_system}
               </div>
             </div>
           );

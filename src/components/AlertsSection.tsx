@@ -1,5 +1,6 @@
 import { AlertTriangle, Info } from "lucide-react";
 import type { HardwareInfo } from "../types/hardware";
+import { cn } from "../utils/cn";
 
 interface Alert {
   level: "warn" | "info";
@@ -32,7 +33,6 @@ function buildAlerts(data: HardwareInfo): Alert[] {
     }
   }
 
-
   return alerts;
 }
 
@@ -41,12 +41,20 @@ export function AlertsSection({ data }: { data: HardwareInfo }) {
   if (alerts.length === 0) return null;
 
   return (
-    <div className="alerts-section">
+    <div className="flex flex-col gap-1.5">
       {alerts.map((a, i) => (
-        <div key={i} className={`alert-item ${a.level}`}>
+        <div
+          key={i}
+          className={cn(
+            "flex items-start gap-2 px-3.5 py-2.5 rounded-[8px] text-[13px] leading-relaxed border",
+            a.level === "warn"
+              ? "bg-amber/[8%] border-amber/25 text-amber"
+              : "bg-blue/[7%] border-blue/20 text-sub"
+          )}
+        >
           {a.level === "warn"
-            ? <AlertTriangle size={14} className="alert-icon" />
-            : <Info size={14} className="alert-icon" />
+            ? <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber" />
+            : <Info size={14} className="shrink-0 mt-0.5 text-blue" />
           }
           <span>{a.message}</span>
         </div>

@@ -6,14 +6,16 @@ import { AlertsSection } from "./components/AlertsSection";
 import { SpecChecker } from "./components/SpecChecker";
 import { DetailPanel } from "./components/DetailPanel";
 import { useHardwareInfo } from "./hooks/useHardwareInfo";
+import { cn } from "./utils/cn";
 import type { HardwareInfo } from "./types/hardware";
+
 const logoImg = "/logo.png";
 
 function formatAllSpecs(data: HardwareInfo): string {
   const lines: string[] = [`=== 내 PC 사양 (${data.computer_name}) ===\n`];
   if (data.os) lines.push(`[OS] ${data.os.name} ${data.os.architecture} (빌드 ${data.os.build})\n`);
   if (data.cpu) lines.push(`[CPU] ${data.cpu.name}\n  ${data.cpu.cores}코어 ${data.cpu.threads}스레드 / 최대 ${(data.cpu.max_clock_mhz / 1000).toFixed(1)}GHz\n`);
-  if (data.gpus.length > 0) lines.push(`[GPU] ${data.gpus.map(g => `${g.name}${g.vram_gb != null ? ` (${g.vram_gb.toFixed(0)}GB)`  : ""}`).join(", ")}\n`);
+  if (data.gpus.length > 0) lines.push(`[GPU] ${data.gpus.map(g => `${g.name}${g.vram_gb != null ? ` (${g.vram_gb.toFixed(0)}GB)` : ""}`).join(", ")}\n`);
   if (data.ram) lines.push(`[RAM] ${data.ram.total_gb.toFixed(0)}GB ${data.ram.memory_type} ${data.ram.speed_mhz}MHz\n`);
   data.drives.forEach(d => lines.push(`[${d.letter}] ${d.label || "로컬 디스크"} ${d.drive_type} — ${d.free_gb.toFixed(0)}GB 여유 / ${d.total_gb.toFixed(0)}GB\n`));
   if (data.motherboard) lines.push(`[메인보드] ${data.motherboard.manufacturer} ${data.motherboard.model}\n`);
@@ -22,8 +24,8 @@ function formatAllSpecs(data: HardwareInfo): string {
 
 function LoadingScreen() {
   return (
-    <div className="loading-screen">
-      <div className="spinner" />
+    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted">
+      <div className="w-8 h-8 rounded-full border-2 border-edge border-t-blue animate-spin-fast" />
       <p>PC 사양을 불러오는 중...</p>
     </div>
   );
@@ -31,21 +33,26 @@ function LoadingScreen() {
 
 function WindowsOnlyScreen() {
   return (
-    <div className="windows-only-screen">
-      <Monitor size={60} strokeWidth={1.2} className="windows-only-icon" />
-      <p className="windows-only-title">Windows 전용 앱</p>
-      <p className="windows-only-desc">이 앱은 Windows 10/11에서만 동작합니다.</p>
+    <div className="flex-1 flex flex-col items-center justify-center gap-3.5 text-center px-10">
+      <Monitor size={60} strokeWidth={1.2} className="text-muted opacity-50" />
+      <p className="text-[18px] font-bold text-fg">Windows 전용 앱</p>
+      <p className="text-sm text-muted">이 앱은 Windows 10/11에서만 동작합니다.</p>
     </div>
   );
 }
 
 function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="error-screen">
-      <div className="error-icon">⚠</div>
-      <p className="error-title">정보를 가져오지 못했습니다</p>
-      <p className="error-message">{message}</p>
-      <button className="retry-btn" onClick={onRetry}>다시 시도</button>
+    <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
+      <div className="text-[40px] text-red">⚠</div>
+      <p className="text-[16px] font-semibold text-fg">정보를 가져오지 못했습니다</p>
+      <p className="text-[13px] text-muted max-w-[400px] break-keep">{message}</p>
+      <button
+        className="mt-2 px-6 py-2.5 rounded-[8px] border border-blue bg-blue/10 text-blue text-sm font-semibold hover:bg-blue/20 transition-colors cursor-pointer font-[inherit]"
+        onClick={onRetry}
+      >
+        다시 시도
+      </button>
     </div>
   );
 }
@@ -57,14 +64,14 @@ function OsBar({ data }: { data: HardwareInfo }) {
     ? `${Math.floor(os.uptime_hours / 24)}일 ${os.uptime_hours % 24}시간`
     : `${os.uptime_hours}시간`;
   return (
-    <div className="os-bar">
+    <div className="flex items-center gap-2 px-4 py-2.5 bg-card border border-edge rounded-[8px] text-[12px] text-muted">
       {is_laptop ? <Laptop size={13} /> : <Monitor size={13} />}
-      <span className="os-bar-name">{os.name}</span>
-      <span className="os-bar-sep">·</span>
+      <span className="text-sub font-semibold">{os.name}</span>
+      <span className="text-edge">·</span>
       <span>{os.architecture}</span>
-      <span className="os-bar-sep">·</span>
+      <span className="text-edge">·</span>
       <span>{computer_name}</span>
-      <span className="os-bar-sep">·</span>
+      <span className="text-edge">·</span>
       <span>가동 {uptime}</span>
     </div>
   );
@@ -92,27 +99,34 @@ export default function App() {
   const ram = data?.ram;
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="header-left">
-          <div className="app-logo">
-            <img src={logoImg} alt="logo" />
+    <div className="flex flex-col h-screen min-w-[700px] overflow-hidden">
+      {/* Header */}
+      <header className="flex items-center justify-between px-7 py-[18px] bg-base border-b border-edge gap-4 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-[34px] h-[34px] shrink-0 flex items-center justify-center">
+            <img src={logoImg} alt="logo" className="w-full h-full object-contain opacity-85" />
           </div>
-          <h1 className="app-title">내 PC 한눈에</h1>
+          <h1 className="text-[17px] font-bold text-fg tracking-tight">내 PC 한눈에</h1>
         </div>
+
         {!isWindowsOnly && (
-          <div className="header-actions">
+          <div className="flex gap-2.5">
             <button
-              className="action-btn refresh-btn"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-sub text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-card-hover hover:text-fg hover:border-slate-500 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]"
               onClick={handleRefresh}
               disabled={loading || refreshing}
               title="새로고침"
             >
-              <RefreshCw size={14} className={refreshing ? "spin-icon" : ""} />
+              <RefreshCw size={14} className={refreshing ? "animate-spin-fast" : ""} />
               새로고침
             </button>
             <button
-              className={`action-btn copy-all-btn ${copied ? "copied" : ""}`}
+              className={cn(
+                "flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border text-[13px] font-medium cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]",
+                copied
+                  ? "bg-green/10 border-green text-green"
+                  : "bg-base border-edge text-sub hover:bg-card-hover hover:text-fg hover:border-slate-500"
+              )}
               onClick={handleCopyAll}
               disabled={!data}
               title="전체 사양 복사"
@@ -123,17 +137,24 @@ export default function App() {
         )}
       </header>
 
+      {/* Tab navigation */}
       {data && !loading && (
-        <nav className="tab-nav">
+        <nav className="flex px-6 bg-base border-b border-edge shrink-0">
           <button
-            className={`tab-btn ${activeTab === "specs" ? "active" : ""}`}
+            className={cn(
+              "flex items-center gap-[7px] px-[18px] py-[11px] bg-transparent border-b-2 text-[13px] font-semibold font-[inherit] cursor-pointer transition-all duration-150 -mb-px",
+              activeTab === "specs" ? "text-blue border-b-blue" : "text-muted border-b-transparent hover:text-sub"
+            )}
             onClick={() => setActiveTab("specs")}
           >
             <Monitor size={14} />
             내 PC 사양
           </button>
           <button
-            className={`tab-btn ${activeTab === "checker" ? "active" : ""}`}
+            className={cn(
+              "flex items-center gap-[7px] px-[18px] py-[11px] bg-transparent border-b-2 text-[13px] font-semibold font-[inherit] cursor-pointer transition-all duration-150 -mb-px",
+              activeTab === "checker" ? "text-blue border-b-blue" : "text-muted border-b-transparent hover:text-sub"
+            )}
             onClick={() => setActiveTab("checker")}
           >
             <Gamepad2 size={14} />
@@ -142,7 +163,13 @@ export default function App() {
         </nav>
       )}
 
-      <main className={`app-main${activeTab === "checker" && data && !loading ? " app-main--checker" : ""}`}>
+      {/* Main */}
+      <main
+        className={cn(
+          "flex-1 px-7 py-6 pb-7 flex flex-col gap-5 min-h-0",
+          activeTab === "checker" && data && !loading ? "overflow-hidden" : "overflow-y-auto"
+        )}
+      >
         {loading && <LoadingScreen />}
         {isWindowsOnly && <WindowsOnlyScreen />}
         {error && !isWindowsOnly && !loading && <ErrorScreen message={error} onRetry={handleRefresh} />}
@@ -153,7 +180,7 @@ export default function App() {
 
             {activeTab === "specs" && (
               <>
-                <div className="cards-grid">
+                <div className="grid grid-cols-3 gap-4">
                   <HardwareCard
                     Icon={Cpu}
                     title="CPU"
@@ -166,7 +193,6 @@ export default function App() {
                     ] : []}
                     copyText={cpu ? `[CPU] ${cpu.name} (${cpu.cores}코어/${cpu.threads}스레드 ${(cpu.max_clock_mhz / 1000).toFixed(1)}GHz)` : ""}
                   />
-
                   <HardwareCard
                     Icon={Monitor}
                     title="GPU"
@@ -178,7 +204,6 @@ export default function App() {
                     ] : []}
                     copyText={gpu ? `[GPU] ${gpu.name}${gpu.vram_gb != null ? ` (VRAM ${gpu.vram_gb.toFixed(0)}GB)` : ""}` : ""}
                   />
-
                   <HardwareCard
                     Icon={Database}
                     title="RAM"
@@ -194,21 +219,18 @@ export default function App() {
                 </div>
 
                 <StorageCard drives={data.drives} />
-
                 <AlertsSection data={data} />
-
                 <DetailPanel data={data} />
               </>
             )}
 
-            {activeTab === "checker" && (
-              <SpecChecker data={data} />
-            )}
+            {activeTab === "checker" && <SpecChecker data={data} />}
           </>
         )}
       </main>
 
-      <footer className="app-footer">
+      {/* Footer */}
+      <footer className="px-7 py-3 border-t border-edge text-center text-[11px] text-muted shrink-0">
         <span>오프라인 동작 · 개인정보 수집 없음</span>
       </footer>
     </div>
