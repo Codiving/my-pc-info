@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop, Gamepad2, DownloadCloud } from "lucide-react";
+import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop, Gamepad2, DownloadCloud, Loader2 } from "lucide-react";
 import { HardwareCard } from "./components/HardwareCard";
 import { StorageCard } from "./components/StorageCard";
 import { AlertsSection } from "./components/AlertsSection";
@@ -115,7 +115,7 @@ export default function App() {
           <div className="flex gap-2.5">
             {update && (
               <button
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-green text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-white/[4%] font-[inherit]"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-blue text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-white/[4%] font-[inherit]"
                 onClick={openModal}
                 title={`버전 ${update.version}으로 업데이트`}
               >
@@ -269,7 +269,7 @@ export default function App() {
                 onClick={install}
                 disabled={installing}
               >
-                <DownloadCloud size={14} className={installing ? "animate-spin-fast" : ""} />
+                {installing ? <Loader2 size={14} className="animate-spin-fast" /> : <DownloadCloud size={14} />}
                 {installing ? "설치 중..." : "지금 업데이트"}
               </button>
             </div>
