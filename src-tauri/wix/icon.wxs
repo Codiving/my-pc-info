@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <!-- Sets the installer window title bar icon and Add/Remove Programs icon -->
+    <Icon Id="ProductIcon" SourceFile="../icons/icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="ProductIcon" />
+  </Fragment>
+</Wix>
