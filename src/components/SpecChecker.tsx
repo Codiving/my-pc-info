@@ -204,19 +204,6 @@ function SpecBreakdown({ result }: { result: SpecCheckResult }) {
           {req.ram_gb     && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">RAM</span><span className="text-sub text-right">{req.ram_gb}GB 이상</span></div>}
           {req.storage_gb && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">저장 공간</span><span className="text-sub text-right">{req.storage_gb}GB 이상</span></div>}
           {req.notes      && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">비고</span><span className="text-amber text-right break-keep">{req.notes}</span></div>}
-          {result.app.source && (
-            <a
-              href={result.app.source}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 mt-1 pt-1.5 border-t border-edge/40 text-[11px] text-muted break-all hover:text-fg"
-              title={result.app.source}
-            >
-              <span className="font-semibold text-blue">공식 출처</span>
-              <span>{sourceLabel(result.app)}</span>
-              <ExternalLink size={11} className="shrink-0" />
-            </a>
-          )}
         </div>
       )}
     </div>
@@ -247,17 +234,31 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
       </div>
       {result.app.source && (
         <div className="px-3.5 pb-1">
-          <a
-            href={result.app.source}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-[8px] border border-edge/60 bg-black/[10%] px-3 py-2 text-[12px] text-sub transition-colors hover:border-blue/40 hover:text-fg"
-            title={result.app.source}
-          >
-            <span className="font-semibold text-blue">공식 출처</span>
-            <span className="break-all">{source}</span>
-            <ExternalLink size={12} className="shrink-0" />
-          </a>
+          <div className="rounded-[10px] border border-blue/25 bg-blue/[7%] px-3 py-2.5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[12px] font-bold text-blue">공식 출처</div>
+                <p className="mt-0.5 text-[12px] leading-snug text-sub">
+                  이 판정은 아래 공식 문서를 기준으로 계산합니다.
+                </p>
+              </div>
+              <a
+                href={result.app.source}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 shrink-0 rounded-[8px] border border-blue/30 bg-base px-2.5 py-1.5 text-[11px] font-semibold text-blue transition-colors hover:bg-blue/10"
+                title={result.app.source}
+              >
+                문서 열기
+                <ExternalLink size={11} />
+              </a>
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted break-all">
+              <span className="font-medium text-sub">{source}</span>
+              <span className="text-edge">·</span>
+              <span>{result.app.source}</span>
+            </div>
+          </div>
         </div>
       )}
       <div className="px-3.5 pb-1">
