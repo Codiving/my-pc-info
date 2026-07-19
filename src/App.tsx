@@ -276,11 +276,11 @@ export default function App() {
         </div>
       )}
 
-      {version && (
-        <div className="fixed bottom-3 left-4 text-[11px] text-muted/50 select-none pointer-events-none">
-          v{version}
-        </div>
-      )}
+      <footer className="shrink-0 border-t border-edge px-5 py-1.5 flex items-center">
+        {version && (
+          <span className="text-[11px] text-muted/50 select-none">v{version}</span>
+        )}
+      </footer>
     </div>
   );
 }
