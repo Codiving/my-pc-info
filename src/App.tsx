@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop, Gamepad2, DownloadCloud, Loader2 } from "lucide-react";
 import { HardwareCard } from "./components/HardwareCard";
 import { StorageCard } from "./components/StorageCard";
@@ -83,6 +84,9 @@ export default function App() {
   const { update, showModal, installing, dismiss, openModal, install } = useUpdater();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"specs" | "checker">("specs");
+  const [version, setVersion] = useState("");
+
+  useEffect(() => { getVersion().then(setVersion).catch(() => {}); }, []);
 
   const isWindowsOnly = error === "WINDOWS_ONLY";
 
@@ -269,6 +273,12 @@ export default function App() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {version && (
+        <div className="fixed bottom-3 left-4 text-[11px] text-muted/50 select-none pointer-events-none">
+          v{version}
         </div>
       )}
     </div>
