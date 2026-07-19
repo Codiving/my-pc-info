@@ -35,6 +35,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # WiX MSI 빌드가 light.exe 단계에서 VBScript 기능을 요구할 수 있다.
+      - name: Enable VBScript for WiX
+        shell: pwsh
+        run: dism /online /Enable-Feature /FeatureName:VBScript /All /NoRestart
+
       # PR / main 푸시: 빌드 검증 + artifact 보관
       - name: Build
         if: "!startsWith(github.ref, 'refs/tags/v')"
