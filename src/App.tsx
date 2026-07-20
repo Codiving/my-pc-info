@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getVersion } from "@tauri-apps/api/app";
-import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop, Gamepad2, DownloadCloud, Loader2 } from "lucide-react";
+import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop, Gamepad2, DownloadCloud, Loader2, Sun, Moon } from "lucide-react";
 import { HardwareCard } from "./components/HardwareCard";
 import { StorageCard } from "./components/StorageCard";
 import { AlertsSection } from "./components/AlertsSection";
@@ -8,6 +8,7 @@ import { SpecChecker } from "./components/SpecChecker";
 import { DetailPanel } from "./components/DetailPanel";
 import { useHardwareInfo } from "./hooks/useHardwareInfo";
 import { useUpdater } from "./hooks/useUpdater";
+import { useTheme } from "./hooks/useTheme";
 import { cn } from "./utils/cn";
 import type { HardwareInfo } from "./types/hardware";
 
@@ -50,7 +51,7 @@ function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => voi
       <p className="text-[16px] font-semibold text-fg">정보를 가져오지 못했습니다</p>
       <p className="text-[13px] text-muted max-w-[400px] break-keep">{message}</p>
       <button
-        className="mt-2 px-6 py-2.5 rounded-[8px] border border-edge bg-white/[3%] text-sub text-sm font-semibold hover:bg-white/[5%] hover:text-fg transition-colors cursor-pointer font-[inherit]"
+        className="mt-2 px-6 py-2.5 rounded-[8px] border border-edge bg-fill-2 text-sub text-sm font-semibold hover:bg-fill-4 hover:text-fg transition-colors cursor-pointer font-[inherit]"
         onClick={onRetry}
       >
         다시 시도
@@ -82,6 +83,7 @@ function OsBar({ data }: { data: HardwareInfo }) {
 export default function App() {
   const { data, loading, error, refresh, copyToClipboard, copied } = useHardwareInfo();
   const { update, showModal, installing, dismiss, openModal, install } = useUpdater();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"specs" | "checker">("specs");
   const [version, setVersion] = useState("");
@@ -110,16 +112,17 @@ export default function App() {
       <header className="flex items-center justify-between px-7 py-[18px] bg-base border-b border-edge gap-4 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-[34px] h-[34px] shrink-0 flex items-center justify-center">
-            <img src={logoImg} alt="logo" className="w-full h-full object-contain opacity-85" />
+            <img src={logoImg} alt="logo" className="brand-logo w-full h-full object-contain opacity-85" />
           </div>
           <h1 className="text-[17px] font-bold text-fg tracking-tight">내 PC 한눈에</h1>
         </div>
 
-        {!isWindowsOnly && (
-          <div className="flex gap-2.5">
+        <div className="flex items-center gap-2.5">
+          {!isWindowsOnly && (
+            <>
             {update && (
               <button
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-blue text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-white/[4%] font-[inherit]"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-blue text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-fill-3 font-[inherit]"
                 onClick={openModal}
                 title={`버전 ${update.version}으로 업데이트`}
               >
@@ -128,7 +131,7 @@ export default function App() {
               </button>
             )}
             <button
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-sub text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-white/[4%] hover:text-fg hover:border-edge/80 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border border-edge bg-base text-sub text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-fill-3 hover:text-fg hover:border-edge/80 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]"
               onClick={handleRefresh}
               disabled={loading || refreshing}
               title="새로고침"
@@ -140,8 +143,8 @@ export default function App() {
               className={cn(
                 "flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] border text-[13px] font-medium cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed font-[inherit]",
                 copied
-                  ? "bg-white/[4%] border-edge text-green"
-                  : "bg-base border-edge text-sub hover:bg-white/[4%] hover:text-fg hover:border-edge/80"
+                  ? "bg-fill-3 border-edge text-green"
+                  : "bg-base border-edge text-sub hover:bg-fill-3 hover:text-fg hover:border-edge/80"
               )}
               onClick={handleCopyAll}
               disabled={!data}
@@ -149,8 +152,17 @@ export default function App() {
             >
               {copied ? <><Check size={14} /> 복사됨</> : <><Copy size={14} /> 전체 복사</>}
             </button>
-          </div>
-        )}
+            </>
+          )}
+          <button
+            className="flex items-center justify-center w-[38px] h-[38px] rounded-[8px] border border-edge bg-base text-sub cursor-pointer transition-all duration-150 hover:bg-fill-3 hover:text-fg hover:border-edge/80 font-[inherit]"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"}
+            aria-label="테마 전환"
+          >
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+        </div>
       </header>
 
       {/* Tab navigation */}
@@ -257,7 +269,7 @@ export default function App() {
             </div>
             <div className="flex gap-2.5 justify-end">
               <button
-                className="px-4 py-2 rounded-[8px] border border-edge bg-transparent text-muted text-[13px] font-medium cursor-pointer hover:text-fg hover:bg-white/[3%] transition-colors font-[inherit] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-[8px] border border-edge bg-transparent text-muted text-[13px] font-medium cursor-pointer hover:text-fg hover:bg-fill-2 transition-colors font-[inherit] disabled:opacity-40 disabled:cursor-not-allowed"
                 onClick={dismiss}
                 disabled={installing}
               >

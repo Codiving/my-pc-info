@@ -10,7 +10,7 @@ interface StorageCardProps {
 function UsageBar({ percent, critical }: { percent: number; critical: boolean }) {
   const color = critical ? "var(--color-red)" : "#f97316";
   return (
-    <div className="flex-1 h-[5px] bg-white/[8%] rounded-full overflow-hidden">
+    <div className="flex-1 h-[5px] bg-fill-5 rounded-full overflow-hidden">
       <div
         className="h-full rounded-sm transition-[width] duration-[400ms]"
         style={{ width: `${percent}%`, background: color }}
@@ -32,10 +32,10 @@ export function StorageCard({ drives }: StorageCardProps) {
   };
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-edge/80 shadow-[0_2px_12px_rgba(0,0,0,0.22)] hover:shadow-[0_3px_14px_rgba(0,0,0,0.26)]">
+    <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-edge/80 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 bg-white/[4%] border border-edge/60" style={{ color: "#f97316" }}>
+          <div className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 bg-fill-3 border border-edge/60" style={{ color: "#f97316" }}>
             <HardDrive size={22} />
           </div>
           <div className="text-[16px] font-bold text-fg">저장장치</div>
@@ -44,8 +44,8 @@ export function StorageCard({ drives }: StorageCardProps) {
           className={cn(
             "w-8 h-8 flex items-center justify-center rounded-[8px] border transition-all duration-150 shrink-0 cursor-pointer",
             justCopied
-              ? "border-edge text-green bg-white/[4%]"
-              : "border-edge text-muted hover:border-edge hover:text-fg hover:bg-white/[4%] disabled:opacity-30 disabled:cursor-not-allowed"
+              ? "border-edge text-green bg-fill-3"
+              : "border-edge text-muted hover:border-edge hover:text-fg hover:bg-fill-3 disabled:opacity-30 disabled:cursor-not-allowed"
           )}
           onClick={handleCopy}
           disabled={drives.length === 0}
@@ -68,11 +68,11 @@ export function StorageCard({ drives }: StorageCardProps) {
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[15px] font-bold text-fg">{drive.letter}</span>
                   {drive.is_boot && (
-                    <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-white/[4%] text-sub border border-edge/60">
+                    <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-fill-3 text-sub border border-edge/60">
                       부팅
                     </span>
                   )}
-                  <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-white/[4%] text-muted border border-edge/60">
+                  <span className="text-[12px] font-semibold px-2 py-0.5 rounded-[5px] bg-fill-3 text-muted border border-edge/60">
                     {drive.drive_type}
                   </span>
                   {drive.label && <span className="text-[13px] text-muted">{drive.label}</span>}

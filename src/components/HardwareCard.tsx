@@ -26,11 +26,11 @@ export function HardwareCard({ Icon, title, color, mainValue, specs, copyText, u
   const barColor = usagePercent != null && usagePercent >= 85 ? "var(--color-red)" : color;
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-edge/80 shadow-[0_2px_12px_rgba(0,0,0,0.22)] hover:shadow-[0_3px_14px_rgba(0,0,0,0.26)]">
+    <div className="bg-card border border-edge rounded-[14px] p-4 flex flex-col gap-2.5 transition-all duration-150 hover:border-edge/80 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div
-            className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 bg-white/[4%] border border-edge/60"
+            className="w-[42px] h-[42px] rounded-[10px] flex items-center justify-center shrink-0 bg-fill-3 border border-edge/60"
             style={{ color }}
           >
             <Icon size={22} />
@@ -41,8 +41,8 @@ export function HardwareCard({ Icon, title, color, mainValue, specs, copyText, u
           className={cn(
             "w-8 h-8 flex items-center justify-center rounded-[8px] border transition-all duration-150 shrink-0 cursor-pointer",
             justCopied
-              ? "border-edge text-green bg-white/[4%]"
-              : "border-edge text-muted hover:border-edge hover:text-fg hover:bg-white/[4%] disabled:opacity-30 disabled:cursor-not-allowed"
+              ? "border-edge text-green bg-fill-3"
+              : "border-edge text-muted hover:border-edge hover:text-fg hover:bg-fill-3 disabled:opacity-30 disabled:cursor-not-allowed"
           )}
           onClick={handleCopy}
           disabled={!mainValue}
@@ -58,7 +58,7 @@ export function HardwareCard({ Icon, title, color, mainValue, specs, copyText, u
 
       {usagePercent != null && (
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-[5px] bg-white/[8%] rounded-full overflow-hidden">
+          <div className="flex-1 h-[5px] bg-fill-5 rounded-full overflow-hidden">
             <div
               className="h-full rounded-sm transition-[width] duration-[400ms]"
               style={{ width: `${usagePercent}%`, background: barColor }}

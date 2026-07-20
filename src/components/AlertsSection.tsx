@@ -48,8 +48,8 @@ export function AlertsSection({ data }: { data: HardwareInfo }) {
           className={cn(
             "flex items-start gap-2 px-3.5 py-2.5 rounded-[8px] text-[13px] leading-relaxed border",
             a.level === "warn"
-              ? "bg-white/[3%] border-edge/60 text-amber"
-              : "bg-white/[2%] border-edge/60 text-sub"
+              ? "bg-fill-2 border-edge/60 text-amber"
+              : "bg-fill-1 border-edge/60 text-sub"
           )}
         >
           {a.level === "warn"

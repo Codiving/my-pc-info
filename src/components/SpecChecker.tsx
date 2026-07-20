@@ -61,10 +61,10 @@ function levelLabel(level: JudgmentLevel): string {
 
 function levelClass(level: JudgmentLevel): string {
   switch (level) {
-    case "met":        return "bg-white/[4%] text-green border border-edge/70";
-    case "borderline": return "bg-white/[4%] text-amber border border-edge/70";
-    case "unmet":      return "bg-white/[4%] text-red border border-edge/70";
-    case "unknown":    return "bg-white/[4%] text-muted border border-edge/70";
+    case "met":        return "bg-fill-3 text-green border border-edge/70";
+    case "borderline": return "bg-fill-3 text-amber border border-edge/70";
+    case "unmet":      return "bg-fill-3 text-red border border-edge/70";
+    case "unknown":    return "bg-fill-3 text-muted border border-edge/70";
   }
 }
 
@@ -88,10 +88,10 @@ function confidenceLabel(c: ConfidenceLevel): string {
 
 function resultCardClass(overall: JudgmentLevel): string {
   switch (overall) {
-    case "met":        return "border-edge/80 bg-white/[2%]";
-    case "borderline": return "border-edge/80 bg-white/[2%]";
-    case "unmet":      return "border-edge/80 bg-white/[2%]";
-    case "unknown":    return "border-edge/80 bg-white/[2%]";
+    case "met":        return "border-edge/80 bg-fill-1";
+    case "borderline": return "border-edge/80 bg-fill-1";
+    case "unmet":      return "border-edge/80 bg-fill-1";
+    case "unknown":    return "border-edge/80 bg-fill-1";
   }
 }
 
@@ -157,9 +157,9 @@ async function openExternalUrl(url: string) {
 
 function LevelIcon({ level }: { level: JudgmentLevel }) {
   const base = "text-[12px] font-bold w-4 text-center shrink-0";
-  if (level === "met")        return <span className={cn(base, "text-[#4ade80]")}>✓</span>;
-  if (level === "borderline") return <span className={cn(base, "text-[#fbbf24]")}>△</span>;
-  if (level === "unmet")      return <span className={cn(base, "text-[#f87171]")}>✗</span>;
+  if (level === "met")        return <span className={cn(base, "text-ok")}>✓</span>;
+  if (level === "borderline") return <span className={cn(base, "text-warn")}>△</span>;
+  if (level === "unmet")      return <span className={cn(base, "text-bad")}>✗</span>;
   return <span className={cn(base, "text-muted")}>?</span>;
 }
 
@@ -205,7 +205,7 @@ function SpecBreakdown({ result }: { result: SpecCheckResult }) {
       </button>
 
       {showReqs && (
-        <div className="mt-1.5 p-2.5 bg-white/[2%] rounded-[8px] border border-edge/60 flex flex-col gap-[5px] animate-slide-down">
+        <div className="mt-1.5 p-2.5 bg-fill-1 rounded-[8px] border border-edge/60 flex flex-col gap-[5px] animate-slide-down">
           {req.cpu        && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">CPU</span><span className="text-sub text-right break-keep">{req.cpu}</span></div>}
           {req.cpu_cores  && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">CPU 코어</span><span className="text-sub text-right">{req.cpu_cores}코어 이상</span></div>}
           {req.cpu_clock_ghz && <div className="flex justify-between gap-3 text-[12px]"><span className="text-muted shrink-0 min-w-[70px]">CPU 클럭</span><span className="text-sub text-right">{req.cpu_clock_ghz}GHz 이상</span></div>}
@@ -231,14 +231,14 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
     "text-muted";
 
   const badgeBase =
-    "inline-flex h-9 items-center justify-center rounded-[10px] border border-edge/70 bg-white/[2%] px-3.5 text-[12px] font-medium leading-none whitespace-nowrap";
+    "inline-flex h-9 items-center justify-center rounded-[10px] border border-edge/70 bg-fill-1 px-3.5 text-[12px] font-medium leading-none whitespace-nowrap";
 
   return (
     <div className={cn("rounded-[8px] border overflow-hidden animate-slide-down", resultCardClass(result.overall))}>
       <div className="flex items-start justify-between gap-3 px-3.5 py-3 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-[14px] font-bold text-fg">{result.app.name}</span>
-          <span className="text-[11px] text-muted bg-white/[5%] border border-edge rounded-[4px] px-[7px] py-px">
+          <span className="text-[11px] text-muted bg-fill-4 border border-edge rounded-[4px] px-[7px] py-px">
             {appKindLabel(result.app.kind)}
           </span>
         </div>
@@ -252,7 +252,7 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
         </div>
       </div>
       <div className="px-3.5 pb-1">
-        <div className="rounded-[8px] border border-edge/60 bg-white/[2%] px-3 py-2">
+        <div className="rounded-[8px] border border-edge/60 bg-fill-1 px-3 py-2">
           <div className="text-[14px] font-semibold text-fg">{summary.title}</div>
           <div className="mt-0.5 text-[12px] leading-snug text-muted">{summary.detail}</div>
         </div>
@@ -260,7 +260,7 @@ function ResultCard({ result }: { result: SpecCheckResult }) {
       <SpecBreakdown result={result} />
       {result.app.source && (
         <div className="px-3.5 pb-3">
-          <div className="rounded-[8px] border border-edge/60 bg-white/[2%] px-3 py-2.5">
+          <div className="rounded-[8px] border border-edge/60 bg-fill-1 px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-[12px] font-semibold text-sub">출처</div>
@@ -404,13 +404,13 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
   }
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] shadow-[0_2px_12px_rgba(0,0,0,0.22)] flex flex-col flex-1 min-h-0 overflow-hidden">
+    <div className="bg-card border border-edge rounded-[14px] shadow-[var(--shadow-card)] flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Top: header + search */}
       <div className="px-4 py-3.5 flex flex-col gap-2.5 shrink-0 border-b border-edge">
         <div className="flex items-center gap-2 text-[14px] font-bold text-fg">
           <Gamepad2 size={15} />
           <span>게임 / 프로그램 사양 검사</span>
-          <span className="ml-auto text-[11px] font-medium text-muted bg-white/[4%] border border-edge rounded-[4px] px-2 py-px">
+          <span className="ml-auto text-[11px] font-medium text-muted bg-fill-3 border border-edge rounded-[4px] px-2 py-px">
             추정 판정
           </span>
         </div>
@@ -453,8 +453,8 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
                 className={cn(
                   "px-3.5 py-[7px] text-[12px] font-semibold font-[inherit] border-none cursor-pointer transition-all duration-150",
                   tier === "minimum"
-                    ? "bg-white/[5%] text-fg"
-                    : "bg-transparent text-muted hover:bg-white/[4%] hover:text-sub"
+                    ? "bg-fill-4 text-fg"
+                    : "bg-transparent text-muted hover:bg-fill-3 hover:text-sub"
                 )}
                 onClick={() => setTier("minimum")}
               >
@@ -464,11 +464,11 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
                 className={cn(
                   "px-3.5 py-[7px] text-[12px] font-semibold font-[inherit] border-none transition-all duration-150",
                   tier === "recommended"
-                    ? "bg-white/[5%] text-fg"
+                    ? "bg-fill-4 text-fg"
                     : "bg-transparent text-muted",
                   !hasRecommended
                     ? "opacity-35 cursor-not-allowed"
-                    : "cursor-pointer hover:bg-white/[4%] hover:text-sub"
+                    : "cursor-pointer hover:bg-fill-3 hover:text-sub"
                 )}
                 onClick={() => hasRecommended && setTier("recommended")}
                 disabled={!hasRecommended}
@@ -486,7 +486,7 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
             {POPULAR_QUERIES.map((item) => (
               <button
                 key={item}
-                className="px-2.5 py-1 rounded-[999px] border border-edge bg-white/[2%] text-[11px] text-sub font-medium cursor-pointer transition-colors hover:bg-white/[4%] hover:text-fg hover:border-edge"
+                className="px-2.5 py-1 rounded-[999px] border border-edge bg-fill-1 text-[11px] text-sub font-medium cursor-pointer transition-colors hover:bg-fill-3 hover:text-fg hover:border-edge"
                 onClick={() => {
                   setQuery(item);
                   setOpen(true);
@@ -524,7 +524,7 @@ export function SpecChecker({ data }: { data: HardwareInfo }) {
           <div
             ref={refs.setFloating}
             style={floatingStyles}
-            className="bg-card border border-edge rounded-[8px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] z-[100] overflow-y-auto"
+            className="bg-card border border-edge rounded-[8px] shadow-[var(--shadow-pop)] z-[100] overflow-y-auto"
             {...getFloatingProps()}
           >
             {filtered.length > 0 ? (

@@ -13,6 +13,61 @@
   --color-green: #4aa36b;
   --color-red: #cf6770;
   --color-amber: #c7923d;
+
+  /* status accents — bright glyphs / bars */
+  --color-ok: #4ade80;
+  --color-warn: #fbbf24;
+  --color-bad: #f87171;
+
+  /* translucent surface fills — re-tinted per theme */
+  --color-fill-1: rgba(255, 255, 255, 0.02);
+  --color-fill-2: rgba(255, 255, 255, 0.03);
+  --color-fill-3: rgba(255, 255, 255, 0.04);
+  --color-fill-4: rgba(255, 255, 255, 0.05);
+  --color-fill-5: rgba(255, 255, 255, 0.08);
+}
+
+/* Non-color tokens that also swap between themes */
+:root {
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.22);
+  --shadow-card-hover: 0 3px 14px rgba(0, 0, 0, 0.26);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --bg-glow: rgba(93, 143, 224, 0.08);
+  --scroll-thumb: #2a3648;
+  --scroll-thumb-hover: #394960;
+}
+
+/* ── Light theme ─────────────────────────────────────────────── */
+[data-theme="light"] {
+  --color-base: #f3f5fa;
+  --color-card: #ffffff;
+  --color-card-hover: #f6f8fc;
+  --color-fg: #1a2436;
+  --color-sub: #3d4a5c;
+  --color-muted: #6b7789;
+  --color-edge: #dbe1ec;
+  --color-blue: #3f74c9;
+  --color-purple: #7a5fc4;
+  --color-green: #3f9a63;
+  --color-red: #ce5460;
+  --color-amber: #b5811f;
+
+  --color-ok: #16a34a;
+  --color-warn: #cf8500;
+  --color-bad: #dc2626;
+
+  --color-fill-1: rgba(20, 32, 54, 0.025);
+  --color-fill-2: rgba(20, 32, 54, 0.04);
+  --color-fill-3: rgba(20, 32, 54, 0.055);
+  --color-fill-4: rgba(20, 32, 54, 0.07);
+  --color-fill-5: rgba(20, 32, 54, 0.1);
+
+  --shadow-card: 0 1px 3px rgba(20, 32, 54, 0.06), 0 4px 12px rgba(20, 32, 54, 0.05);
+  --shadow-card-hover: 0 2px 6px rgba(20, 32, 54, 0.09), 0 6px 18px rgba(20, 32, 54, 0.08);
+  --shadow-pop: 0 10px 30px rgba(20, 32, 54, 0.15);
+  --bg-glow: rgba(63, 116, 201, 0.09);
+  --scroll-thumb: #c6cfdc;
+  --scroll-thumb-hover: #a9b4c4;
 }
 
 html,
@@ -26,18 +81,19 @@ body {
   font-family: -apple-system, "Malgun Gothic", "맑은 고딕", BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top, rgba(93, 143, 224, 0.08), transparent 45%),
-    #0b1220;
-  color: #e7edf5;
+    radial-gradient(circle at top, var(--bg-glow), transparent 45%),
+    var(--color-base);
+  color: var(--color-fg);
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   user-select: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a3648 transparent;
+  scrollbar-color: var(--scroll-thumb) transparent;
 }
 ::-webkit-scrollbar {
   width: 6px;
@@ -47,11 +103,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3648;
+  background: var(--scroll-thumb);
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #394960;
+  background: var(--scroll-thumb-hover);
 }
 ::-webkit-scrollbar-corner {
   background: transparent;
@@ -78,4 +134,9 @@ body {
 }
 .animate-spin-fast {
   animation: rotateSpin 0.8s linear infinite;
+}
+
+/* 흰색 라인아트 로고를 라이트 모드에서 어둡게 반전 */
+[data-theme="light"] .brand-logo {
+  filter: invert(0.86);
 }
