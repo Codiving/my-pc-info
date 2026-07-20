@@ -7,6 +7,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             commands::get_hardware_info,
+            commands::get_live_metrics,
             commands::open_external_url
         ])
         .run(tauri::generate_context!())

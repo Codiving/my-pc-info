@@ -39,6 +39,17 @@ export interface RamInfo {
   speed_mhz: number;
   slots_used: number;
   slots: RamSlotInfo[];
+  total_slots: number;
+  max_capacity_gb: number | null;
+}
+
+export interface LiveMetrics {
+  cpu_usage_percent: number;
+  cpu_clock_mhz: number;
+  ram_usage_percent: number;
+  ram_used_gb: number;
+  ram_total_gb: number;
+  cpu_temp_c: number | null;
 }
 
 export interface DriveInfo {

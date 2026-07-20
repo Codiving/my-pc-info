@@ -6,6 +6,10 @@ import { StorageCard } from "./components/StorageCard";
 import { AlertsSection } from "./components/AlertsSection";
 import { SpecChecker } from "./components/SpecChecker";
 import { DetailPanel } from "./components/DetailPanel";
+import { LiveMonitor } from "./components/LiveMonitor";
+import { HealthReport } from "./components/HealthReport";
+import { UpgradeGuide } from "./components/UpgradeGuide";
+import { SpecImageExport } from "./components/SpecImageExport";
 import { useHardwareInfo } from "./hooks/useHardwareInfo";
 import { useUpdater } from "./hooks/useUpdater";
 import { useTheme } from "./hooks/useTheme";
@@ -86,6 +90,7 @@ export default function App() {
   const { theme, toggle: toggleTheme } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"specs" | "checker">("specs");
+  const [liveEnabled, setLiveEnabled] = useState(false);
   const [version, setVersion] = useState("");
 
   useEffect(() => { getVersion().then(setVersion).catch(() => {}); }, []);
@@ -152,6 +157,7 @@ export default function App() {
             >
               {copied ? <><Check size={14} /> 복사됨</> : <><Copy size={14} /> 전체 복사</>}
             </button>
+            {data && <SpecImageExport data={data} theme={theme} />}
             </>
           )}
           <button
@@ -208,6 +214,7 @@ export default function App() {
 
             {activeTab === "specs" && (
               <>
+                <LiveMonitor enabled={liveEnabled} onToggle={setLiveEnabled} />
                 <div className="grid grid-cols-2 gap-4">
                   <HardwareCard
                     Icon={Cpu}
@@ -247,6 +254,8 @@ export default function App() {
                   <StorageCard drives={data.drives} />
                 </div>
                 <AlertsSection data={data} />
+                <HealthReport data={data} />
+                <UpgradeGuide data={data} />
                 <DetailPanel data={data} />
               </>
             )}

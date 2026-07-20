@@ -1,4 +1,4 @@
-import type { HardwareInfo } from "../types/hardware";
+import type { HardwareInfo, LiveMetrics } from "../types/hardware";
 
 // Mac 등 비(非) Tauri 환경에서 UI를 미리보기 위한 가짜 데이터.
 // 실제 Windows 빌드에서는 사용되지 않는다. (useHardwareInfo 참고)
@@ -58,6 +58,8 @@ export function getMockHardwareInfo(): HardwareInfo {
         { slot: "DIMM 0", capacity_gb: 16, speed_mhz: 5600, memory_type: "DDR5", manufacturer: "Samsung" },
         { slot: "DIMM 1", capacity_gb: 16, speed_mhz: 5600, memory_type: "DDR5", manufacturer: "Samsung" },
       ],
+      total_slots: 2,
+      max_capacity_gb: 64,
     },
     drives: [
       {
@@ -130,5 +132,19 @@ export function getMockHardwareInfo(): HardwareInfo {
     },
     is_laptop: true,
     computer_name: "ROG-STRIX-G16",
+  };
+}
+
+// 실시간 모니터링 미리보기용 가짜 지표. 호출할 때마다 값이 자연스럽게 흔들린다.
+export function getMockLiveMetrics(): LiveMetrics {
+  const ramUsage = jitter(38, 6);
+  const totalRam = 32;
+  return {
+    cpu_usage_percent: jitter(28, 22),
+    cpu_clock_mhz: jitter(4200, 800, 2000, 5100),
+    ram_usage_percent: ramUsage,
+    ram_used_gb: +(totalRam * (ramUsage / 100)).toFixed(1),
+    ram_total_gb: totalRam,
+    cpu_temp_c: jitter(58, 12, 40, 92),
   };
 }

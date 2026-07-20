@@ -45,6 +45,21 @@ pub struct RamInfo {
     pub speed_mhz: u32,
     pub slots_used: u32,
     pub slots: Vec<RamSlotInfo>,
+    pub total_slots: u32,
+    pub max_capacity_gb: Option<f64>,
+}
+
+/// 자동 갱신(실시간 모니터링)용 경량 지표. 전체 하드웨어 조회보다 훨씬 가볍게
+/// 사용률·온도만 반복 조회한다.
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct LiveMetrics {
+    pub cpu_usage_percent: u32,
+    pub cpu_clock_mhz: u32,
+    pub ram_usage_percent: u32,
+    pub ram_used_gb: f64,
+    pub ram_total_gb: f64,
+    /// ACPI 열영역 온도(℃). 메인보드가 제공하지 않으면 None.
+    pub cpu_temp_c: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -157,6 +172,19 @@ mod platform {
         SMBIOSMemoryType: Option<u32>,
         DeviceLocator: Option<String>,
         Manufacturer: Option<String>,
+    }
+
+    #[allow(non_snake_case, non_camel_case_types)]
+    #[derive(serde::Deserialize, Debug)]
+    struct Win32_PhysicalMemoryArray {
+        MemoryDevices: Option<u32>,
+        MaxCapacityEx: Option<u64>, // KB
+    }
+
+    #[allow(non_snake_case, non_camel_case_types)]
+    #[derive(serde::Deserialize, Debug)]
+    struct MSAcpi_ThermalZoneTemperature {
+        CurrentTemperature: Option<u32>, // tenths of Kelvin
     }
 
     #[allow(non_snake_case, non_camel_case_types)]
@@ -399,6 +427,15 @@ mod platform {
                 ram_modules.first().and_then(|m| m.SMBIOSMemoryType).unwrap_or(0)
             ).to_string();
             let slots_used = ram_modules.len() as u32;
+            let mem_array: Vec<Win32_PhysicalMemoryArray> = wmi_con.query().unwrap_or_default();
+            let total_slots = mem_array.first()
+                .and_then(|a| a.MemoryDevices)
+                .filter(|&n| n >= slots_used)
+                .unwrap_or(slots_used);
+            let max_capacity_gb = mem_array.first()
+                .and_then(|a| a.MaxCapacityEx)
+                .filter(|&kb| kb > 0)
+                .map(|kb| (kb as f64 / (1024.0 * 1024.0)).round());
             let slots = ram_modules.iter().map(|m| RamSlotInfo {
                 slot: m.DeviceLocator.as_deref().unwrap_or("Unknown").trim().to_string(),
                 capacity_gb: m.Capacity.unwrap_or(0) as f64 / (1u64 << 30) as f64,
@@ -407,7 +444,7 @@ mod platform {
                 manufacturer: m.Manufacturer.as_deref().unwrap_or("Unknown").trim()
                     .replace('\u{0}', "").to_string(),
             }).collect();
-            Some(RamInfo { total_gb, available_gb, used_gb, usage_percent, memory_type: mem_type, speed_mhz, slots_used, slots })
+            Some(RamInfo { total_gb, available_gb, used_gb, usage_percent, memory_type: mem_type, speed_mhz, slots_used, slots, total_slots, max_capacity_gb })
         };
 
         // ── OS ─────────────────────────────────────────────────────────────────
@@ -538,6 +575,43 @@ mod platform {
 
         Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, is_laptop, computer_name })
     }
+
+    /// ACPI 열영역에서 CPU/시스템 온도(℃)를 읽는다. root\WMI 네임스페이스가 필요하며
+    /// 지원하지 않는 메인보드(특히 일부 노트북)에서는 None을 반환한다.
+    fn read_cpu_temp(com_con: COMLibrary) -> Option<f64> {
+        let wmi = WMIConnection::with_namespace_path("root\\WMI", com_con).ok()?;
+        let zones: Vec<MSAcpi_ThermalZoneTemperature> = wmi.query().ok()?;
+        // 여러 열영역 중 가장 높은 값을 대표 온도로 사용.
+        zones.into_iter()
+            .filter_map(|z| z.CurrentTemperature)
+            .filter(|&t| t > 2732) // 0℃(=2732 tenths-K) 미만은 무효값으로 간주
+            .map(|t| t as f64 / 10.0 - 273.15)
+            .fold(None, |acc, c| Some(acc.map_or(c, |a: f64| a.max(c))))
+            .map(|c| (c * 10.0).round() / 10.0)
+    }
+
+    pub fn get_live_metrics() -> Result<LiveMetrics, String> {
+        let com_con = COMLibrary::new().map_err(|e| format!("COM 초기화 실패: {e}"))?;
+        let wmi_con = WMIConnection::new(com_con).map_err(|e| format!("WMI 연결 실패: {e}"))?;
+
+        let cpu = wmi_con.query::<Win32_Processor>().ok().and_then(|v| v.into_iter().next());
+        let os = wmi_con.query::<Win32_OperatingSystem>().ok().and_then(|v| v.into_iter().next());
+
+        let total_kb = os.as_ref().and_then(|o| o.TotalVisibleMemorySize).unwrap_or(0);
+        let free_kb = os.as_ref().and_then(|o| o.FreePhysicalMemory).unwrap_or(0);
+        let ram_total_gb = total_kb as f64 / (1024.0 * 1024.0);
+        let ram_used_gb = (total_kb.saturating_sub(free_kb)) as f64 / (1024.0 * 1024.0);
+        let ram_usage_percent = if total_kb > 0 { ((total_kb - free_kb) * 100 / total_kb) as u32 } else { 0 };
+
+        Ok(LiveMetrics {
+            cpu_usage_percent: cpu.as_ref().and_then(|c| c.LoadPercentage).unwrap_or(0),
+            cpu_clock_mhz: cpu.as_ref().and_then(|c| c.CurrentClockSpeed).unwrap_or(0),
+            ram_usage_percent,
+            ram_used_gb,
+            ram_total_gb,
+            cpu_temp_c: read_cpu_temp(com_con),
+        })
+    }
 }
 
 // ─── Non-Windows stub ────────────────────────────────────────────────────────
@@ -547,6 +621,10 @@ mod platform {
     use super::*;
 
     pub fn get_hardware_info() -> Result<HardwareInfo, String> {
+        Err("WINDOWS_ONLY".into())
+    }
+
+    pub fn get_live_metrics() -> Result<LiveMetrics, String> {
         Err("WINDOWS_ONLY".into())
     }
 }
@@ -559,6 +637,14 @@ pub fn get_hardware_info() -> Result<HardwareInfo, String> {
     // wmi crate calls CoInitializeEx(COINIT_MULTITHREADED), causing 0x80010106
     // (RPC_E_CHANGED_MODE) if called on the same thread. A fresh OS thread avoids this.
     std::thread::spawn(|| platform::get_hardware_info())
+        .join()
+        .map_err(|_| "스레드 오류".to_string())?
+}
+
+#[tauri::command]
+pub fn get_live_metrics() -> Result<LiveMetrics, String> {
+    // get_hardware_info와 동일하게 COM 아파트먼트 충돌을 피하려 별도 스레드에서 실행.
+    std::thread::spawn(|| platform::get_live_metrics())
         .join()
         .map_err(|_| "스레드 오류".to_string())?
 }
