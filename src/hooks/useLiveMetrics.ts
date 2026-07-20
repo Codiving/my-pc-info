@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { LiveMetrics } from "../types/hardware";
-import { getMockLiveMetrics } from "../data/mockHardware";
-
-const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 const HISTORY_LEN = 40; // 미니 그래프에 유지할 표본 수
 
@@ -26,9 +23,7 @@ export function useLiveMetrics(enabled: boolean, intervalMs = 2000) {
     if (inFlight.current) return;
     inFlight.current = true;
     try {
-      const m = isTauri
-        ? await invoke<LiveMetrics>("get_live_metrics")
-        : getMockLiveMetrics();
+      const m = await invoke<LiveMetrics>("get_live_metrics");
       setMetrics(m);
       setHistory((prev) => ({
         cpu: [...prev.cpu, m.cpu_usage_percent].slice(-HISTORY_LEN),
