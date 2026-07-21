@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { LiveMetrics } from "../types/hardware";
+import { getMockLiveMetrics } from "../data/mockHardware";
 
 const HISTORY_LEN = 40; // 미니 그래프에 유지할 표본 수
 
@@ -23,7 +24,14 @@ export function useLiveMetrics(enabled: boolean, intervalMs = 2000) {
     if (inFlight.current) return;
     inFlight.current = true;
     try {
-      const m = await invoke<LiveMetrics>("get_live_metrics");
+      let m: LiveMetrics;
+      try {
+        m = await invoke<LiveMetrics>("get_live_metrics");
+      } catch (e) {
+        // useHardwareInfo와 동일: 개발 모드에서 백엔드가 실패하면 목업 지표로 미리보기.
+        if (!import.meta.env.DEV) throw e;
+        m = getMockLiveMetrics();
+      }
       setMetrics(m);
       setHistory((prev) => ({
         cpu: [...prev.cpu, m.cpu_usage_percent].slice(-HISTORY_LEN),
