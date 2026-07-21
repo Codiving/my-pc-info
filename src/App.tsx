@@ -200,7 +200,7 @@ export default function App() {
       {/* Main */}
       <main
         className={cn(
-          "flex-1 px-7 py-6 pb-7 flex flex-col gap-5 min-h-0",
+          "flex-1 px-7 pt-8 pb-7 flex flex-col gap-5 min-h-0",
           activeTab === "checker" && data && !loading ? "overflow-hidden" : "overflow-y-auto"
         )}
       >
@@ -254,9 +254,9 @@ export default function App() {
                   <StorageCard drives={data.drives} />
                 </div>
                 <AlertsSection data={data} />
+                <DetailPanel data={data} />
                 <HealthReport data={data} />
                 <UpgradeGuide data={data} />
-                <DetailPanel data={data} />
               </>
             )}
 

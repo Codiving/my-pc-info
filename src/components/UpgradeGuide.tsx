@@ -104,9 +104,14 @@ export function UpgradeGuide({ data }: { data: HardwareInfo }) {
       </button>
 
       {open && (
-        <div className="px-4 pb-4 pt-1 flex flex-col gap-2 border-t border-edge animate-slide-down">
+        <div
+          className={cn(
+            "flex flex-col border-t border-edge animate-slide-down",
+            suggestions.length === 0 ? "p-4" : "px-4 pb-4 pt-3 gap-2"
+          )}
+        >
           {suggestions.length === 0 ? (
-            <div className="flex items-center gap-2.5 px-3.5 py-4 text-[13px] text-sub">
+            <div className="flex items-center gap-2.5 px-1.5 py-2.5 text-[13px] text-sub">
               <CheckCircle2 size={16} className="text-green shrink-0" />
               현재 구성에서 특별히 권장할 업그레이드가 없습니다. 균형 잡힌 사양입니다.
             </div>
