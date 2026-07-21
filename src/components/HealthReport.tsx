@@ -96,8 +96,8 @@ export function HealthReport({ data }: { data: HardwareInfo }) {
   const offset = C * (1 - score / 100);
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] shadow-[var(--shadow-card)] px-5 py-4">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="bg-card border border-edge rounded-[14px] shadow-[var(--shadow-card)] px-5 py-3">
+      <div className="flex items-center gap-2 mb-3.5">
         <HeartPulse size={15} className="text-muted" />
         <span className="text-[15px] font-bold text-fg">건강 상태 진단</span>
       </div>
