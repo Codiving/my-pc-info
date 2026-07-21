@@ -90,7 +90,7 @@ export function UpgradeGuide({ data }: { data: HardwareInfo }) {
   return (
     <div className="bg-card border border-edge rounded-[14px] shadow-[var(--shadow-card)] flex flex-col">
       <button
-        className="w-full px-5 py-4 bg-transparent text-fg text-[15px] font-bold cursor-pointer flex items-center gap-2 font-[inherit]"
+        className="w-full px-5 py-3 bg-transparent text-fg text-[15px] font-bold cursor-pointer flex items-center gap-2 font-[inherit]"
         onClick={() => setOpen(!open)}
       >
         <ChevronDown size={16} className={cn("transition-transform duration-200 text-muted", open && "rotate-180")} />

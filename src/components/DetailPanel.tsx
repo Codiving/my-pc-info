@@ -86,7 +86,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
     <div className="bg-card border border-edge rounded-[14px] shadow-[var(--shadow-card)] flex flex-col">
       <div className="flex items-center justify-between px-5">
         <button
-          className="flex-1 py-4 bg-transparent text-fg text-[15px] font-bold cursor-pointer flex items-center gap-2 font-[inherit] transition-colors"
+          className="flex-1 py-3 bg-transparent text-fg text-[15px] font-bold cursor-pointer flex items-center gap-2 font-[inherit] transition-colors"
           onClick={() => setPanelOpen(!panelOpen)}
         >
           <ChevronDown
