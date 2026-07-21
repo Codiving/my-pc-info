@@ -42,18 +42,17 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pnpm tauri build
 
-      # 설치기 파일명 정리: "내_PC_한눈에_0.1.0.exe"
+      # 설치기 파일명을 ASCII 영문으로: "my-pc-info_0.1.0_x64-setup.exe"
+      # (비ASCII 한글 파일명이 SmartScreen/Defender 휴리스틱을 자극하는지 검증용)
       - name: Rename installer
         shell: pwsh
         run: |
           $nsisDir = "src-tauri/target/release/bundle/nsis"
-          foreach ($f in @(Get-ChildItem $nsisDir -Filter "*.exe")) {
-            $n = $f.Name -replace '내 PC 한눈에', '내_PC_한눈에'
-            $n = $n -replace '_x64(?:_[a-z]{2,3}-[A-Z]{2})?(?:-setup)?', ''
-            if ($n -ne $f.Name) {
-              Rename-Item $f.FullName (Join-Path $f.DirectoryName $n)
-            }
-          }
+          $conf    = Get-Content "src-tauri/tauri.conf.json" -Raw | ConvertFrom-Json
+          $version = $conf.version
+          $f = Get-ChildItem $nsisDir -Filter "*.exe" | Select-Object -First 1
+          $target = Join-Path $f.DirectoryName "my-pc-info_${version}_x64-setup.exe"
+          Rename-Item $f.FullName $target
 
       - name: Upload NSIS
         if: "!startsWith(github.ref, 'refs/tags/v')"
