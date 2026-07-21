@@ -71,7 +71,7 @@ export function LiveMonitor({ enabled, onToggle }: { enabled: boolean; onToggle:
     : "var(--color-ok)";
 
   return (
-    <div className="bg-card border border-edge rounded-[14px] shadow-[var(--shadow-card)] px-5 py-4 flex flex-col gap-3.5">
+    <div className="bg-card border border-edge rounded-[14px] shadow-[var(--shadow-card)] px-5 py-3 flex flex-col gap-3.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Activity size={15} className={cn(enabled ? "text-green" : "text-muted")} />
