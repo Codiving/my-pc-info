@@ -229,6 +229,13 @@ export function getMockHardwareInfo(): HardwareInfo {
         },
       ],
     },
+    cooling: {
+      overall: "supported",
+      fans: [
+        { name: "CPU Fan", rpm: 1780, active_cooling: true, variable_speed: true },
+        { name: "Chassis Fan", rpm: 1240, active_cooling: true, variable_speed: true },
+      ],
+    },
     is_laptop: true,
     computer_name: "ROG-STRIX-G16",
   };

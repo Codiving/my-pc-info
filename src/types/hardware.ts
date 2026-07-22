@@ -104,6 +104,7 @@ export interface BatteryInfo {
 export type AvailabilityStatus = "supported" | "unsupported" | "unknown";
 export type ToggleStatus = "enabled" | "disabled" | "unsupported" | "unknown";
 export type StorageHealthLevel = "healthy" | "warning" | "unhealthy" | "unknown" | "unsupported";
+export type CoolingHealthLevel = "supported" | "unsupported" | "unknown";
 
 export interface TpmInfo {
   is_enabled: boolean | null;
@@ -134,6 +135,18 @@ export interface StorageDiskHealthInfo {
 export interface StorageHealthInfo {
   overall: StorageHealthLevel;
   disks: StorageDiskHealthInfo[];
+}
+
+export interface FanInfo {
+  name: string;
+  rpm: number | null;
+  active_cooling: boolean | null;
+  variable_speed: boolean | null;
+}
+
+export interface CoolingInfo {
+  overall: CoolingHealthLevel;
+  fans: FanInfo[];
 }
 
 // ─── Spec checker types ───────────────────────────────────────────────────────
@@ -195,6 +208,7 @@ export interface HardwareInfo {
   battery: BatteryInfo | null;
   firmware: FirmwareInfo;
   storage_health: StorageHealthInfo;
+  cooling: CoolingInfo;
   is_laptop: boolean;
   computer_name: string;
 }

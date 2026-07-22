@@ -152,6 +152,20 @@ pub struct StorageHealthInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct FanInfo {
+    pub name: String,
+    pub rpm: Option<u32>,
+    pub active_cooling: Option<bool>,
+    pub variable_speed: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct CoolingInfo {
+    pub overall: String,
+    pub fans: Vec<FanInfo>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct HardwareInfo {
     pub cpu: Option<CpuInfo>,
     pub gpus: Vec<GpuInfo>,
@@ -163,6 +177,7 @@ pub struct HardwareInfo {
     pub battery: Option<BatteryInfo>,
     pub firmware: FirmwareInfo,
     pub storage_health: StorageHealthInfo,
+    pub cooling: CoolingInfo,
     pub is_laptop: bool,
     pub computer_name: String,
 }
@@ -324,6 +339,17 @@ mod platform {
 
     #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
+    struct Win32_Fan {
+        Name: Option<String>,
+        DeviceID: Option<String>,
+        DesiredSpeed: Option<u64>,
+        ActiveCooling: Option<bool>,
+        VariableSpeed: Option<bool>,
+        Status: Option<String>,
+    }
+
+    #[allow(non_snake_case, non_camel_case_types)]
+    #[derive(serde::Deserialize, Debug)]
     struct Win32_DiskDriveForHealth {
         Model: Option<String>,
         InterfaceType: Option<String>,
@@ -441,6 +467,60 @@ mod platform {
             manufacturer_version: tpm.ManufacturerVersion.unwrap_or_default().trim().to_string(),
             manufacturer_id: tpm.ManufacturerId.map(decode_tpm_manufacturer_id).unwrap_or_default(),
         })
+    }
+
+    fn query_cooling_info() -> CoolingInfo {
+        let com_con = match COMLibrary::new() {
+            Ok(v) => v,
+            Err(_) => {
+                return CoolingInfo { overall: "unsupported".into(), fans: vec![] };
+            }
+        };
+        let wmi = match WMIConnection::new(com_con) {
+            Ok(v) => v,
+            Err(_) => {
+                return CoolingInfo { overall: "unsupported".into(), fans: vec![] };
+            }
+        };
+
+        let fans: Vec<Win32_Fan> = match wmi.query() {
+            Ok(v) => v,
+            Err(_) => {
+                return CoolingInfo { overall: "unsupported".into(), fans: vec![] };
+            }
+        };
+
+        if fans.is_empty() {
+            return CoolingInfo { overall: "unsupported".into(), fans: vec![] };
+        }
+
+        let mapped: Vec<FanInfo> = fans.into_iter().enumerate().map(|(idx, fan)| {
+            let rpm = fan.DesiredSpeed.and_then(|v| {
+                if v == 0 || v > u32::MAX as u64 {
+                    None
+                } else {
+                    Some(v as u32)
+                }
+            });
+            FanInfo {
+                name: fan.Name
+                    .or(fan.DeviceID)
+                    .unwrap_or_else(|| format!("Fan {}", idx + 1))
+                    .trim()
+                    .to_string(),
+                rpm,
+                active_cooling: fan.ActiveCooling,
+                variable_speed: fan.VariableSpeed,
+            }
+        }).collect();
+
+        let overall = if mapped.iter().any(|fan| fan.rpm.is_some()) {
+            "supported".into()
+        } else {
+            "unknown".into()
+        };
+
+        CoolingInfo { overall, fans: mapped }
     }
 
     #[derive(serde::Deserialize)]
@@ -890,7 +970,9 @@ $results | ConvertTo-Json -Compress -Depth 4
             }
         };
 
-        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, storage_health, is_laptop, computer_name })
+        let cooling = query_cooling_info();
+
+        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, storage_health, cooling, is_laptop, computer_name })
     }
 
     /// ACPI 열영역에서 CPU/시스템 온도(℃)를 읽는다. root\WMI 네임스페이스가 필요하며

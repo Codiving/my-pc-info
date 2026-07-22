@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Cpu, Monitor, Database, HardDrive, CircuitBoard, Globe, Wifi, Battery, ShieldCheck, ChevronDown } from "lucide-react";
+import { Cpu, Monitor, Database, HardDrive, CircuitBoard, Globe, Wifi, Battery, ShieldCheck, Fan, ChevronDown } from "lucide-react";
 import type { HardwareInfo } from "../types/hardware";
 import { cn } from "../utils/cn";
 
@@ -53,6 +53,17 @@ function smartLabel(status: string): string {
   }
 }
 
+function coolingLabel(status: string): string {
+  switch (status) {
+    case "supported":
+      return "지원됨";
+    case "unsupported":
+      return "지원 안 됨";
+    default:
+      return "감지 불가";
+  }
+}
+
 function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
   icon: typeof Cpu;
   label: string;
@@ -87,7 +98,7 @@ function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
 export function DetailPanel({ data }: { data: HardwareInfo }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
-  const { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, storage_health } = data;
+  const { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, storage_health, cooling } = data;
 
   const availableKeys = [
     cpu ? "cpu" : null,
@@ -100,6 +111,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
     battery ? "battery" : null,
     firmware ? "firmware" : null,
     storage_health ? "storage_health" : null,
+    cooling ? "cooling" : null,
   ].filter(Boolean) as string[];
 
   const allOpen = availableKeys.length > 0 && availableKeys.every((k) => openItems.has(k));
@@ -311,6 +323,28 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                   </>
                 ) : (
                   <Row label="TPM" value="지원 안 됨" />
+                )}
+              </Section>
+            </AccordionItem>
+          )}
+
+          {cooling && (
+            <AccordionItem icon={Fan} label="냉각" open={openItems.has("cooling")} onToggle={() => toggleItem("cooling")}>
+              <Section title="팬 상태">
+                <Row label="전체 상태" value={coolingLabel(cooling.overall)} />
+                {cooling.fans.length > 0 ? (
+                  cooling.fans.map((fan, i) => (
+                    <div key={i} className="bg-fill-1 rounded-[8px] px-3 py-2.5 border border-edge/60 mt-2 first:mt-0">
+                      <div className="text-[11px] font-semibold text-muted uppercase tracking-[0.5px] mb-2">
+                        {fan.name}
+                      </div>
+                      <Row label="요청 RPM" value={fan.rpm != null ? `${fan.rpm} RPM` : "감지 불가"} />
+                      <Row label="가변 속도" value={fan.variable_speed == null ? "감지 불가" : fan.variable_speed ? "지원" : "미지원"} />
+                      <Row label="능동 냉각" value={fan.active_cooling == null ? "감지 불가" : fan.active_cooling ? "지원" : "미지원"} />
+                    </div>
+                  ))
+                ) : (
+                  <Row label="팬" value="지원 안 됨" />
                 )}
               </Section>
             </AccordionItem>

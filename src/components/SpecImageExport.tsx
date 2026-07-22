@@ -60,6 +60,15 @@ function specRows(data: HardwareInfo): Array<[string, string]> {
             : "감지 불가";
     rows.push(["SMART", smartLabel]);
   }
+  if (data.cooling) {
+    const rpmValues = data.cooling.fans.map((fan) => fan.rpm).filter((rpm): rpm is number => rpm != null);
+    const coolingLabel = rpmValues.length > 0
+      ? `${data.cooling.fans.length}개 감지 / 최고 ${Math.max(...rpmValues).toLocaleString()} RPM`
+      : data.cooling.fans.length > 0
+        ? "감지됨 / RPM 감지 불가"
+        : "지원 안 됨";
+    rows.push(["FAN", coolingLabel]);
+  }
   return rows;
 }
 
