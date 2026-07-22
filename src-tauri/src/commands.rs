@@ -133,6 +133,25 @@ pub struct FirmwareInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct StorageDiskHealthInfo {
+    pub name: String,
+    pub model: String,
+    pub bus_type: String,
+    pub health_status: String,
+    pub temperature_c: Option<f64>,
+    pub power_on_hours: Option<u64>,
+    pub read_errors_total: Option<u64>,
+    pub write_errors_total: Option<u64>,
+    pub wear: Option<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct StorageHealthInfo {
+    pub overall: String,
+    pub disks: Vec<StorageDiskHealthInfo>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct HardwareInfo {
     pub cpu: Option<CpuInfo>,
     pub gpus: Vec<GpuInfo>,
@@ -143,6 +162,7 @@ pub struct HardwareInfo {
     pub network: Vec<NetworkInfo>,
     pub battery: Option<BatteryInfo>,
     pub firmware: FirmwareInfo,
+    pub storage_health: StorageHealthInfo,
     pub is_laptop: bool,
     pub computer_name: String,
 }
@@ -302,6 +322,15 @@ mod platform {
         SpecVersion: Option<String>,
     }
 
+    #[allow(non_snake_case, non_camel_case_types)]
+    #[derive(serde::Deserialize, Debug)]
+    struct Win32_DiskDriveForHealth {
+        Model: Option<String>,
+        InterfaceType: Option<String>,
+        MediaType: Option<String>,
+        Index: Option<u32>,
+    }
+
     fn memory_type_name(code: u32) -> &'static str {
         match code {
             20 => "DDR", 21 => "DDR2", 24 => "DDR3", 26 => "DDR4", 34 => "DDR5", _ => "Unknown",
@@ -412,6 +441,193 @@ mod platform {
             manufacturer_version: tpm.ManufacturerVersion.unwrap_or_default().trim().to_string(),
             manufacturer_id: tpm.ManufacturerId.map(decode_tpm_manufacturer_id).unwrap_or_default(),
         })
+    }
+
+    #[derive(serde::Deserialize)]
+    struct PowerShellStorageDiskHealth {
+        name: Option<String>,
+        model: Option<String>,
+        bus_type: Option<String>,
+        health_status: Option<String>,
+        temperature_c: Option<f64>,
+        power_on_hours: Option<u64>,
+        read_errors_total: Option<u64>,
+        write_errors_total: Option<u64>,
+        wear: Option<u64>,
+    }
+
+    fn normalize_storage_health_status(status: &str) -> String {
+        match status.trim().to_lowercase().as_str() {
+            "healthy" => "healthy".into(),
+            "warning" => "warning".into(),
+            "unhealthy" => "unhealthy".into(),
+            "unknown" => "unknown".into(),
+            _ => "unknown".into(),
+        }
+    }
+
+    fn fallback_storage_health(disk_models: &[String]) -> StorageHealthInfo {
+        let disks = disk_models
+            .iter()
+            .enumerate()
+            .map(|(idx, model)| StorageDiskHealthInfo {
+                name: format!("Disk {}", idx + 1),
+                model: model.clone(),
+                bus_type: String::new(),
+                health_status: "unsupported".into(),
+                temperature_c: None,
+                power_on_hours: None,
+                read_errors_total: None,
+                write_errors_total: None,
+                wear: None,
+            })
+            .collect();
+
+        StorageHealthInfo {
+            overall: if disk_models.is_empty() { "unsupported".into() } else { "unsupported".into() },
+            disks,
+        }
+    }
+
+    fn query_storage_health(disk_models: &[String]) -> StorageHealthInfo {
+        let script = r#"
+$ErrorActionPreference = 'Stop'
+$results = @(Get-Disk | ForEach-Object {
+  $counter = $null
+  try {
+    $counter = $_ | Get-StorageReliabilityCounter -ErrorAction Stop
+  } catch {
+    $counter = $null
+  }
+
+  [pscustomobject]@{
+    name = if ($_.FriendlyName) { $_.FriendlyName } else { "Disk $($_.Number)" }
+    model = if ($_.FriendlyName) { $_.FriendlyName } elseif ($_.UniqueId) { $_.UniqueId } else { "" }
+    bus_type = [string]$_.BusType
+    health_status = [string]$_.HealthStatus
+    temperature_c = if ($counter -and $null -ne $counter.Temperature) { [double]$counter.Temperature } else { $null }
+    power_on_hours = if ($counter -and $null -ne $counter.PowerOnHours) { [uint64]$counter.PowerOnHours } else { $null }
+    read_errors_total = if ($counter -and $null -ne $counter.ReadErrorsTotal) { [uint64]$counter.ReadErrorsTotal } else { $null }
+    write_errors_total = if ($counter -and $null -ne $counter.WriteErrorsTotal) { [uint64]$counter.WriteErrorsTotal } else { $null }
+    wear = if ($counter -and $null -ne $counter.Wear) { [uint64]$counter.Wear } else { $null }
+  }
+})
+$results | ConvertTo-Json -Compress -Depth 4
+"#;
+
+        let output = Command::new("powershell.exe")
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                script,
+            ])
+            .output();
+
+        let records: Vec<PowerShellStorageDiskHealth> = match output {
+            Ok(out) if out.status.success() => {
+                let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if stdout.is_empty() {
+                    return fallback_storage_health(disk_models);
+                }
+                serde_json::from_str(&stdout).unwrap_or_default()
+            }
+            _ => return fallback_storage_health(disk_models),
+        };
+
+        if records.is_empty() {
+            return fallback_storage_health(disk_models);
+        }
+
+        let disks: Vec<StorageDiskHealthInfo> = records.into_iter().map(|r| StorageDiskHealthInfo {
+            name: r.name.unwrap_or_else(|| "Unknown".into()).trim().to_string(),
+            model: r.model.unwrap_or_default().trim().to_string(),
+            bus_type: r.bus_type.unwrap_or_default().trim().to_string(),
+            health_status: normalize_storage_health_status(&r.health_status.unwrap_or_default()),
+            temperature_c: r.temperature_c,
+            power_on_hours: r.power_on_hours,
+            read_errors_total: r.read_errors_total,
+            write_errors_total: r.write_errors_total,
+            wear: r.wear,
+        }).collect();
+
+        let overall = if disks.iter().any(|d| d.health_status == "unhealthy") {
+            "unhealthy".into()
+        } else if disks.iter().any(|d| d.health_status == "warning") {
+            "warning".into()
+        } else if disks.iter().any(|d| d.health_status == "healthy") {
+            "healthy".into()
+        } else {
+            "unknown".into()
+        };
+
+        StorageHealthInfo { overall, disks }
+    }
+
+    fn query_storage_health_fallback_from_wmi() -> StorageHealthInfo {
+        let com_con = match COMLibrary::new() {
+            Ok(v) => v,
+            Err(_) => return StorageHealthInfo { overall: "unsupported".into(), disks: vec![] },
+        };
+        let wmi = match WMIConnection::with_namespace_path("root\\wmi", com_con) {
+            Ok(v) => v,
+            Err(_) => return StorageHealthInfo { overall: "unsupported".into(), disks: vec![] },
+        };
+
+        #[allow(non_snake_case, non_camel_case_types)]
+        #[derive(serde::Deserialize, Debug)]
+        struct MSStorageDriver_FailurePredictStatus {
+            InstanceName: Option<String>,
+            Active: Option<bool>,
+            PredictFailure: Option<bool>,
+            Reason: Option<u8>,
+        }
+
+        let statuses: Vec<MSStorageDriver_FailurePredictStatus> = match wmi.query() {
+            Ok(v) => v,
+            Err(_) => return StorageHealthInfo { overall: "unsupported".into(), disks: vec![] },
+        };
+
+        if statuses.is_empty() {
+            return StorageHealthInfo { overall: "unsupported".into(), disks: vec![] };
+        }
+
+        let disks: Vec<StorageDiskHealthInfo> = statuses.into_iter().enumerate().map(|(idx, s)| {
+            let status = match (s.Active, s.PredictFailure) {
+                (Some(true), Some(true)) => "unhealthy",
+                (Some(true), Some(false)) => "healthy",
+                (Some(false), _) => "unsupported",
+                _ => "unknown",
+            };
+
+            StorageDiskHealthInfo {
+                name: s.InstanceName.unwrap_or_else(|| format!("Disk {}", idx + 1)),
+                model: String::new(),
+                bus_type: String::new(),
+                health_status: status.into(),
+                temperature_c: None,
+                power_on_hours: None,
+                read_errors_total: None,
+                write_errors_total: None,
+                wear: s.Reason.map(|v| v as u64),
+            }
+        }).collect();
+
+        let overall = if disks.iter().any(|d| d.health_status == "unhealthy") {
+            "unhealthy".into()
+        } else if disks.iter().any(|d| d.health_status == "warning") {
+            "warning".into()
+        } else if disks.iter().any(|d| d.health_status == "healthy") {
+            "healthy".into()
+        } else if disks.iter().any(|d| d.health_status == "unsupported") {
+            "unsupported".into()
+        } else {
+            "unknown".into()
+        };
+
+        StorageHealthInfo { overall, disks }
     }
 
     fn uptime_hours_from_boot(wmi_dt: &str) -> u64 {
@@ -661,7 +877,20 @@ mod platform {
             tpm: query_tpm_info(),
         };
 
-        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, is_laptop, computer_name })
+        let storage_health = {
+            let primary_models: Vec<String> = phys_disks
+                .iter()
+                .map(|d| d.Model.as_deref().unwrap_or("Unknown").trim().to_string())
+                .collect();
+            let health = query_storage_health(&primary_models);
+            if health.disks.is_empty() {
+                query_storage_health_fallback_from_wmi()
+            } else {
+                health
+            }
+        };
+
+        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, storage_health, is_laptop, computer_name })
     }
 
     /// ACPI 열영역에서 CPU/시스템 온도(℃)를 읽는다. root\WMI 네임스페이스가 필요하며

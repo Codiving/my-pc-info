@@ -48,6 +48,18 @@ function specRows(data: HardwareInfo): Array<[string, string]> {
     rows.push(["Secure Boot", secureBootLabel]);
     rows.push(["TPM", data.firmware.tpm ? (data.firmware.tpm.spec_version || "감지 불가") : "지원 안 됨"]);
   }
+  if (data.storage_health) {
+    const smartLabel = data.storage_health.overall === "healthy"
+      ? "정상"
+      : data.storage_health.overall === "warning"
+        ? "주의"
+        : data.storage_health.overall === "unhealthy"
+          ? "불량"
+          : data.storage_health.overall === "unsupported"
+            ? "지원 안 됨"
+            : "감지 불가";
+    rows.push(["SMART", smartLabel]);
+  }
   return rows;
 }
 

@@ -103,6 +103,7 @@ export interface BatteryInfo {
 
 export type AvailabilityStatus = "supported" | "unsupported" | "unknown";
 export type ToggleStatus = "enabled" | "disabled" | "unsupported" | "unknown";
+export type StorageHealthLevel = "healthy" | "warning" | "unhealthy" | "unknown" | "unsupported";
 
 export interface TpmInfo {
   is_enabled: boolean | null;
@@ -116,6 +117,23 @@ export interface TpmInfo {
 export interface FirmwareInfo {
   secure_boot: ToggleStatus;
   tpm: TpmInfo | null;
+}
+
+export interface StorageDiskHealthInfo {
+  name: string;
+  model: string;
+  bus_type: string;
+  health_status: StorageHealthLevel;
+  temperature_c: number | null;
+  power_on_hours: number | null;
+  read_errors_total: number | null;
+  write_errors_total: number | null;
+  wear: number | null;
+}
+
+export interface StorageHealthInfo {
+  overall: StorageHealthLevel;
+  disks: StorageDiskHealthInfo[];
 }
 
 // ─── Spec checker types ───────────────────────────────────────────────────────
@@ -176,6 +194,7 @@ export interface HardwareInfo {
   network: NetworkInfo[];
   battery: BatteryInfo | null;
   firmware: FirmwareInfo;
+  storage_health: StorageHealthInfo;
   is_laptop: boolean;
   computer_name: string;
 }

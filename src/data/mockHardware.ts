@@ -202,6 +202,33 @@ export function getMockHardwareInfo(): HardwareInfo {
         manufacturer_id: "AMD",
       },
     },
+    storage_health: {
+      overall: "healthy",
+      disks: [
+        {
+          name: "Disk 0",
+          model: "Samsung SSD 990 PRO 1TB",
+          bus_type: "NVMe",
+          health_status: "healthy",
+          temperature_c: 38,
+          power_on_hours: 1240,
+          read_errors_total: 0,
+          write_errors_total: 0,
+          wear: 7,
+        },
+        {
+          name: "Disk 1",
+          model: "WD Blue SN580 2TB",
+          bus_type: "NVMe",
+          health_status: "healthy",
+          temperature_c: 35,
+          power_on_hours: 640,
+          read_errors_total: 0,
+          write_errors_total: 0,
+          wear: 3,
+        },
+      ],
+    },
     is_laptop: true,
     computer_name: "ROG-STRIX-G16",
   };

@@ -41,6 +41,18 @@ function formatAllSpecs(data: HardwareInfo): string {
       lines.push(`[TPM] 지원 안 됨\n`);
     }
   }
+  if (data.storage_health) {
+    const smartLabel = data.storage_health.overall === "healthy"
+      ? "정상"
+      : data.storage_health.overall === "warning"
+        ? "주의"
+        : data.storage_health.overall === "unhealthy"
+          ? "불량"
+          : data.storage_health.overall === "unsupported"
+            ? "지원 안 됨"
+            : "감지 불가";
+    lines.push(`[SMART] 전체 상태 ${smartLabel}\n`);
+  }
   return lines.join("\n");
 }
 
@@ -267,7 +279,7 @@ export default function App() {
                     ] : []}
                     copyText={ram ? `[RAM] ${ram.total_gb.toFixed(0)}GB ${ram.memory_type} ${ram.speed_mhz}MHz` : ""}
                   />
-                  <StorageCard drives={data.drives} />
+                <StorageCard drives={data.drives} storageHealth={data.storage_health} />
                 </div>
                 <AlertsSection data={data} />
                 <DetailPanel data={data} />

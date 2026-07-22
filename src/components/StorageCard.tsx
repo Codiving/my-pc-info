@@ -1,10 +1,39 @@
 import { HardDrive, Copy, Check } from "lucide-react";
 import { useState } from "react";
-import type { DriveInfo } from "../types/hardware";
+import type { DriveInfo, StorageHealthInfo, StorageHealthLevel } from "../types/hardware";
 import { cn } from "../utils/cn";
 
 interface StorageCardProps {
   drives: DriveInfo[];
+  storageHealth: StorageHealthInfo;
+}
+
+function healthLabel(status: StorageHealthLevel): string {
+  switch (status) {
+    case "healthy":
+      return "정상";
+    case "warning":
+      return "주의";
+    case "unhealthy":
+      return "불량";
+    case "unsupported":
+      return "지원 안 됨";
+    default:
+      return "감지 불가";
+  }
+}
+
+function healthColor(status: StorageHealthLevel): string {
+  switch (status) {
+    case "healthy":
+      return "var(--color-ok)";
+    case "warning":
+      return "var(--color-warn)";
+    case "unhealthy":
+      return "var(--color-red)";
+    default:
+      return "var(--color-muted)";
+  }
 }
 
 function UsageBar({ percent, critical }: { percent: number; critical: boolean }) {
@@ -19,7 +48,7 @@ function UsageBar({ percent, critical }: { percent: number; critical: boolean })
   );
 }
 
-export function StorageCard({ drives }: StorageCardProps) {
+export function StorageCard({ drives, storageHealth }: StorageCardProps) {
   const [justCopied, setJustCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -91,6 +120,13 @@ export function StorageCard({ drives }: StorageCardProps) {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-1 pt-3 border-t border-edge/60 flex items-center justify-between gap-2 text-[12px]">
+        <span className="text-muted font-medium">SMART</span>
+        <span className="font-semibold" style={{ color: healthColor(storageHealth.overall) }}>
+          {healthLabel(storageHealth.overall)}
+        </span>
       </div>
     </div>
   );

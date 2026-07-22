@@ -38,6 +38,21 @@ function statusLabel(status: string): string {
   }
 }
 
+function smartLabel(status: string): string {
+  switch (status) {
+    case "healthy":
+      return "정상";
+    case "warning":
+      return "주의";
+    case "unhealthy":
+      return "불량";
+    case "unsupported":
+      return "지원 안 됨";
+    default:
+      return "감지 불가";
+  }
+}
+
 function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
   icon: typeof Cpu;
   label: string;
@@ -72,7 +87,7 @@ function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
 export function DetailPanel({ data }: { data: HardwareInfo }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
-  const { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware } = data;
+  const { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, storage_health } = data;
 
   const availableKeys = [
     cpu ? "cpu" : null,
@@ -84,6 +99,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
     network.length > 0 ? "network" : null,
     battery ? "battery" : null,
     firmware ? "firmware" : null,
+    storage_health ? "storage_health" : null,
   ].filter(Boolean) as string[];
 
   const allOpen = availableKeys.length > 0 && availableKeys.every((k) => openItems.has(k));
@@ -196,6 +212,28 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                   <Row label="부팅 드라이브" value={drive.is_boot} />
                 </Section>
               ))}
+              <Section title="SMART 상태">
+                <Row label="전체 상태" value={smartLabel(storage_health.overall)} />
+                {storage_health.disks.length > 0 ? (
+                  storage_health.disks.map((disk, i) => (
+                    <div key={i} className="bg-fill-1 rounded-[8px] px-3 py-2.5 border border-edge/60 mt-2 first:mt-0">
+                      <div className="text-[11px] font-semibold text-muted uppercase tracking-[0.5px] mb-2">
+                        {disk.name}
+                      </div>
+                      <Row label="상태" value={smartLabel(disk.health_status)} />
+                      <Row label="모델" value={disk.model || "감지 불가"} />
+                      <Row label="버스" value={disk.bus_type || "감지 불가"} />
+                      <Row label="온도" value={disk.temperature_c != null ? `${disk.temperature_c.toFixed(0)} °C` : "감지 불가"} />
+                      <Row label="가동 시간" value={disk.power_on_hours != null ? `${disk.power_on_hours}시간` : "감지 불가"} />
+                      <Row label="읽기 오류" value={disk.read_errors_total != null ? `${disk.read_errors_total}` : "감지 불가"} />
+                      <Row label="쓰기 오류" value={disk.write_errors_total != null ? `${disk.write_errors_total}` : "감지 불가"} />
+                      <Row label="Wear" value={disk.wear != null ? `${disk.wear}` : "감지 불가"} />
+                    </div>
+                  ))
+                ) : (
+                  <Row label="디스크" value="지원 안 됨" />
+                )}
+              </Section>
             </AccordionItem>
           )}
 
