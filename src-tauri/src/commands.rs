@@ -104,6 +104,10 @@ pub struct NetworkInfo {
     pub mac_address: String,
     pub speed_mbps: Option<u64>,
     pub adapter_type: String,
+    pub ssid: Option<String>,
+    pub signal_percent: Option<u32>,
+    pub radio_type: Option<String>,
+    pub channel: Option<u32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -338,6 +342,14 @@ mod platform {
         IPEnabled: Option<bool>,
     }
 
+    #[derive(Debug, Default, Clone)]
+    struct WifiInterfaceInfo {
+        ssid: Option<String>,
+        signal_percent: Option<u32>,
+        radio_type: Option<String>,
+        channel: Option<u32>,
+    }
+
     #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
     struct Win32_Battery {
@@ -488,6 +500,90 @@ mod platform {
             manufacturer_version: tpm.ManufacturerVersion.unwrap_or_default().trim().to_string(),
             manufacturer_id: tpm.ManufacturerId.map(decode_tpm_manufacturer_id).unwrap_or_default(),
         })
+    }
+
+    fn parse_wifi_interfaces() -> HashMap<String, WifiInterfaceInfo> {
+        let output = Command::new("netsh")
+            .args(["wlan", "show", "interfaces"])
+            .output();
+
+        let stdout = match output {
+            Ok(out) if out.status.success() => String::from_utf8_lossy(&out.stdout).to_string(),
+            _ => return HashMap::new(),
+        };
+
+        let mut map: HashMap<String, WifiInterfaceInfo> = HashMap::new();
+        let mut current_name: Option<String> = None;
+        let mut current_info = WifiInterfaceInfo::default();
+
+        let flush = |map: &mut HashMap<String, WifiInterfaceInfo>,
+                     current_name: &mut Option<String>,
+                     current_info: &mut WifiInterfaceInfo| {
+            if let Some(name) = current_name.take() {
+                if !name.trim().is_empty() {
+                    map.insert(name, current_info.clone());
+                }
+            }
+            *current_info = WifiInterfaceInfo::default();
+        };
+
+        for raw_line in stdout.lines() {
+            let line = raw_line.trim();
+            if line.is_empty() || line.starts_with('-') {
+                continue;
+            }
+
+            let Some((label, value)) = line.split_once(':') else {
+                continue;
+            };
+
+            let label = label.trim().to_lowercase();
+            let value = value.trim();
+            let is_name = label == "name" || label == "이름";
+            let is_ssid = label == "ssid" || label == "ssid 이름" || label == "ssid name";
+            let is_signal = label.contains("signal") || label.contains("신호");
+            let is_radio = label.contains("radio type") || label.contains("무선 유형") || label.contains("라디오 유형");
+            let is_channel = label == "channel" || label == "채널";
+
+            if is_name {
+                flush(&mut map, &mut current_name, &mut current_info);
+                current_name = Some(value.to_string());
+                continue;
+            }
+
+            if current_name.is_none() {
+                continue;
+            }
+
+            if is_ssid && !label.contains("bssid") && !value.is_empty() {
+                current_info.ssid = Some(value.to_string());
+                continue;
+            }
+
+            if is_signal {
+                let percent = value.trim_end_matches('%').trim().parse::<u32>().ok();
+                current_info.signal_percent = percent;
+                continue;
+            }
+
+            if is_radio && !value.is_empty() {
+                current_info.radio_type = Some(value.to_string());
+                continue;
+            }
+
+            if is_channel {
+                current_info.channel = value.parse::<u32>().ok();
+                continue;
+            }
+        }
+
+        if let Some(name) = current_name {
+            if !name.trim().is_empty() {
+                map.insert(name, current_info);
+            }
+        }
+
+        map
     }
 
     fn query_cooling_info() -> CoolingInfo {
@@ -1025,6 +1121,7 @@ $results | ConvertTo-Json -Compress -Depth 4
         // ── Network ────────────────────────────────────────────────────────────
         let adapters: Vec<Win32_NetworkAdapter> = wmi_con.query().unwrap_or_default();
         let configs:  Vec<Win32_NetworkAdapterConfiguration> = wmi_con.query().unwrap_or_default();
+        let wifi_interfaces = parse_wifi_interfaces();
 
         let mut ip_by_mac: HashMap<String, String> = HashMap::new();
         for cfg in &configs {
@@ -1046,6 +1143,11 @@ $results | ConvertTo-Json -Compress -Depth 4
                 let ip = ip_by_mac.get(&mac).cloned().unwrap_or_default();
                 let speed_mbps = a.Speed.filter(|&s| s > 0).map(|s| s / 1_000_000);
                 let adapter_type = if a.AdapterTypeId == Some(9) { "Wi-Fi".into() } else { "이더넷".into() };
+                let wifi_info = if adapter_type == "Wi-Fi" {
+                    wifi_interfaces.get(&a.NetConnectionID.clone().unwrap_or_default()).cloned()
+                } else {
+                    None
+                };
                 Some(NetworkInfo {
                     name,
                     connection_name: a.NetConnectionID.unwrap_or_default(),
@@ -1054,6 +1156,10 @@ $results | ConvertTo-Json -Compress -Depth 4
                     mac_address: mac,
                     speed_mbps,
                     adapter_type,
+                    ssid: wifi_info.as_ref().and_then(|w| w.ssid.clone()),
+                    signal_percent: wifi_info.as_ref().and_then(|w| w.signal_percent),
+                    radio_type: wifi_info.as_ref().and_then(|w| w.radio_type.clone()),
+                    channel: wifi_info.as_ref().and_then(|w| w.channel),
                 })
             })
             .collect();

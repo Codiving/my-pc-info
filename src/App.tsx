@@ -86,7 +86,11 @@ function formatAllSpecs(data: HardwareInfo): string {
   data.drives.forEach(d => lines.push(`[${d.letter}] ${d.label || "로컬 디스크"} ${d.drive_type} — ${d.free_gb.toFixed(0)}GB 여유 / ${d.total_gb.toFixed(0)}GB\n`));
   if (data.network.length > 0) {
     data.network.forEach((n) => {
-      lines.push(`[네트워크] ${n.connection_name || n.name} — ${n.is_connected ? "연결됨" : "연결 안 됨"} / ${n.ip_address || "IP 감지 불가"}${n.speed_mbps != null ? ` / ${n.speed_mbps} Mbps` : ""}\n`);
+      const base = `[네트워크] ${n.connection_name || n.name} — ${n.is_connected ? "연결됨" : "연결 안 됨"} / ${n.ip_address || "IP 감지 불가"}${n.speed_mbps != null ? ` / ${n.speed_mbps} Mbps` : ""}`;
+      const wifi = n.adapter_type === "Wi-Fi"
+        ? `${n.ssid ? ` / SSID ${n.ssid}` : ""}${n.signal_percent != null ? ` / 신호 ${n.signal_percent}%` : ""}${n.radio_type ? ` / ${n.radio_type}` : ""}${n.channel != null ? ` / 채널 ${n.channel}` : ""}`
+        : "";
+      lines.push(`${base}${wifi}\n`);
     });
   }
   if (data.battery) {

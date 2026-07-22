@@ -327,6 +327,14 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                   <Row label="IP 주소" value={n.ip_address || "감지 불가"} />
                   <Row label="MAC 주소" value={n.mac_address || "감지 불가"} />
                   <Row label="링크 속도" value={n.speed_mbps != null ? `${n.speed_mbps} Mbps` : "감지 불가"} />
+                  {n.adapter_type === "Wi-Fi" && (
+                    <>
+                      <Row label="SSID" value={n.ssid || "감지 불가"} />
+                      <Row label="신호 세기" value={n.signal_percent != null ? `${n.signal_percent}%` : "감지 불가"} />
+                      <Row label="무선 규격" value={n.radio_type || "감지 불가"} />
+                      <Row label="채널" value={n.channel != null ? `${n.channel}` : "감지 불가"} />
+                    </>
+                  )}
                 </Section>
               ))}
             </AccordionItem>

@@ -90,6 +90,10 @@ export interface NetworkInfo {
   mac_address: string;
   speed_mbps: number | null;
   adapter_type: string;
+  ssid: string | null;
+  signal_percent: number | null;
+  radio_type: string | null;
+  channel: number | null;
 }
 
 export interface BatteryInfo {

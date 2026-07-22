@@ -40,7 +40,10 @@ function specRows(data: HardwareInfo): Array<[string, string]> {
   if (data.network.length > 0) {
     const active = data.network.find((n) => n.is_connected) ?? data.network[0];
     if (active) {
-      rows.push(["네트워크", `${active.connection_name || active.name}${active.is_connected ? " · 연결됨" : ""}${active.ip_address ? ` · ${active.ip_address}` : ""}${active.speed_mbps != null ? ` · ${active.speed_mbps} Mbps` : ""}`]);
+      rows.push([
+        "네트워크",
+        `${active.connection_name || active.name}${active.is_connected ? " · 연결됨" : ""}${active.ip_address ? ` · ${active.ip_address}` : ""}${active.speed_mbps != null ? ` · ${active.speed_mbps} Mbps` : ""}${active.adapter_type === "Wi-Fi" && active.ssid ? ` · SSID ${active.ssid}` : ""}${active.adapter_type === "Wi-Fi" && active.signal_percent != null ? ` · ${active.signal_percent}%` : ""}${active.adapter_type === "Wi-Fi" && active.radio_type ? ` · ${active.radio_type}` : ""}${active.adapter_type === "Wi-Fi" && active.channel != null ? ` · 채널 ${active.channel}` : ""}`,
+      ]);
     }
   }
   if (data.battery) {
