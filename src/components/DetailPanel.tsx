@@ -192,6 +192,9 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                 <Row label="규격" value={ram.memory_type} />
                 <Row label="속도" value={`${ram.speed_mhz} MHz`} />
                 <Row label="사용 슬롯" value={`${ram.slots_used}개`} />
+                <Row label="총 슬롯" value={`${ram.total_slots}개`} />
+                <Row label="빈 슬롯" value={`${Math.max(0, ram.total_slots - ram.slots_used)}개`} />
+                <Row label="최대 지원 용량" value={ram.max_capacity_gb != null ? `${ram.max_capacity_gb.toFixed(0)} GB` : "감지 불가"} />
               </Section>
               {ram.slots.length > 0 && (
                 <Section title="슬롯별 정보">
@@ -305,10 +308,10 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
               <Section title="배터리 상태">
                 <Row label="충전량" value={`${battery.charge_percent}%`} />
                 <Row label="충전 상태" value={battery.is_charging ? "충전 중" : "배터리 사용 중"} />
-                <Row label="배터리 건강도" value={battery.health_percent != null ? `${battery.health_percent}%` : null} />
-                <Row label="설계 용량" value={battery.design_capacity_mwh != null ? `${battery.design_capacity_mwh} mWh` : null} />
-                <Row label="현재 최대 용량" value={battery.full_capacity_mwh != null ? `${battery.full_capacity_mwh} mWh` : null} />
-                <Row label="예상 사용 시간" value={battery.estimated_minutes != null ? `${Math.floor(battery.estimated_minutes / 60)}시간 ${battery.estimated_minutes % 60}분` : null} />
+                <Row label="배터리 건강도" value={battery.health_percent != null ? `${battery.health_percent}%` : "감지 불가"} />
+                <Row label="설계 용량" value={battery.design_capacity_mwh != null ? `${battery.design_capacity_mwh} mWh` : "감지 불가"} />
+                <Row label="현재 최대 용량" value={battery.full_capacity_mwh != null ? `${battery.full_capacity_mwh} mWh` : "감지 불가"} />
+                <Row label="예상 사용 시간" value={battery.estimated_minutes != null ? `${Math.floor(battery.estimated_minutes / 60)}시간 ${battery.estimated_minutes % 60}분` : "감지 불가"} />
               </Section>
             </AccordionItem>
           )}
@@ -317,12 +320,13 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
             <AccordionItem icon={Wifi} label="네트워크" open={openItems.has("network")} onToggle={() => toggleItem("network")}>
               {network.map((n, i) => (
                 <Section key={i} title={n.connection_name || n.name}>
-                  <Row label="어댑터" value={n.name} />
-                  <Row label="종류" value={n.adapter_type} />
+                  <Row label="어댑터" value={n.name || "감지 불가"} />
+                  <Row label="연결명" value={n.connection_name || "감지 불가"} />
+                  <Row label="종류" value={n.adapter_type || "감지 불가"} />
                   <Row label="상태" value={n.is_connected ? "연결됨" : "연결 안 됨"} />
-                  <Row label="IP 주소" value={n.ip_address} />
-                  <Row label="MAC 주소" value={n.mac_address} />
-                  <Row label="링크 속도" value={n.speed_mbps != null ? `${n.speed_mbps} Mbps` : null} />
+                  <Row label="IP 주소" value={n.ip_address || "감지 불가"} />
+                  <Row label="MAC 주소" value={n.mac_address || "감지 불가"} />
+                  <Row label="링크 속도" value={n.speed_mbps != null ? `${n.speed_mbps} Mbps` : "감지 불가"} />
                 </Section>
               ))}
             </AccordionItem>
@@ -332,6 +336,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
             <AccordionItem icon={Fan} label="냉각" open={openItems.has("cooling")} onToggle={() => toggleItem("cooling")}>
               <Section title="팬 상태">
                 <Row label="전체 상태" value={coolingLabel(cooling.overall)} />
+                <Row label="감지 팬 수" value={`${cooling.fans.length}개`} />
                 {cooling.fans.length > 0 ? (
                   cooling.fans.map((fan, i) => (
                     <div key={i} className="bg-fill-1 rounded-[8px] px-3 py-2.5 border border-edge/60 mt-2 first:mt-0">
@@ -344,7 +349,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                     </div>
                   ))
                 ) : (
-                  <Row label="팬" value="지원 안 됨" />
+                  <Row label="팬" value={cooling.overall === "unsupported" ? "지원 안 됨" : "감지 불가"} />
                 )}
               </Section>
             </AccordionItem>
