@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getVersion } from "@tauri-apps/api/app";
-import { Cpu, Monitor, Database, Fan, RefreshCw, Copy, Check, Laptop, Gamepad2, DownloadCloud, Loader2, Sun, Moon } from "lucide-react";
+import { Cpu, Monitor, Database, RefreshCw, Copy, Check, Laptop, Gamepad2, DownloadCloud, Loader2, Sun, Moon } from "lucide-react";
 import { HardwareCard } from "./components/HardwareCard";
 import { StorageCard } from "./components/StorageCard";
 import { AlertsSection } from "./components/AlertsSection";
@@ -52,16 +52,6 @@ function formatAllSpecs(data: HardwareInfo): string {
             ? "지원 안 됨"
             : "감지 불가";
     lines.push(`[SMART] 전체 상태 ${smartLabel}\n`);
-  }
-  if (data.cooling) {
-    const rpmValues = data.cooling.fans.map((fan) => fan.rpm).filter((rpm): rpm is number => rpm != null);
-    if (rpmValues.length > 0) {
-      lines.push(`[FAN] ${data.cooling.fans.length}개 감지 / 최고 요청 ${Math.max(...rpmValues)}RPM\n`);
-    } else if (data.cooling.fans.length > 0) {
-      lines.push(`[FAN] 감지됨 / RPM 감지 불가\n`);
-    } else {
-      lines.push(`[FAN] 지원 안 됨\n`);
-    }
   }
   return lines.join("\n");
 }
@@ -147,15 +137,6 @@ export default function App() {
   const cpu = data?.cpu;
   const gpu = data?.gpus[0];
   const ram = data?.ram;
-  const cooling = data?.cooling;
-  const fanRpmValues = cooling?.fans.map((fan) => fan.rpm).filter((rpm): rpm is number => rpm != null) ?? [];
-  const fanMainValue = cooling
-    ? fanRpmValues.length > 0
-      ? `${Math.max(...fanRpmValues).toLocaleString()} RPM`
-      : cooling.fans.length > 0
-        ? "감지 불가"
-        : "지원 안 됨"
-    : null;
 
   return (
     <div className="flex flex-col h-screen min-w-0 overflow-hidden">
@@ -299,17 +280,6 @@ export default function App() {
                     copyText={ram ? `[RAM] ${ram.total_gb.toFixed(0)}GB ${ram.memory_type} ${ram.speed_mhz}MHz` : ""}
                   />
                   <StorageCard drives={data.drives} storageHealth={data.storage_health} />
-                  <HardwareCard
-                    Icon={Fan}
-                    title="팬"
-                    color="#06b6d4"
-                    mainValue={fanMainValue}
-                    specs={cooling ? [
-                      { label: "감지 팬", value: `${cooling.fans.length}개` },
-                      { label: "최고 요청 RPM", value: fanRpmValues.length > 0 ? `${Math.max(...fanRpmValues).toLocaleString()} RPM` : "감지 불가" },
-                    ] : []}
-                    copyText={cooling ? `[FAN] ${fanMainValue ?? "지원 안 됨"}` : ""}
-                  />
                 </div>
                 <AlertsSection data={data} />
                 <DetailPanel data={data} />

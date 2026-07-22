@@ -349,6 +349,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
               </Section>
             </AccordionItem>
           )}
+
         </div>
       )}
     </div>

@@ -345,7 +345,6 @@ mod platform {
         DesiredSpeed: Option<u64>,
         ActiveCooling: Option<bool>,
         VariableSpeed: Option<bool>,
-        Status: Option<String>,
     }
 
     #[allow(non_snake_case, non_camel_case_types)]
@@ -472,22 +471,16 @@ mod platform {
     fn query_cooling_info() -> CoolingInfo {
         let com_con = match COMLibrary::new() {
             Ok(v) => v,
-            Err(_) => {
-                return CoolingInfo { overall: "unsupported".into(), fans: vec![] };
-            }
+            Err(_) => return CoolingInfo { overall: "unsupported".into(), fans: vec![] },
         };
         let wmi = match WMIConnection::new(com_con) {
             Ok(v) => v,
-            Err(_) => {
-                return CoolingInfo { overall: "unsupported".into(), fans: vec![] };
-            }
+            Err(_) => return CoolingInfo { overall: "unsupported".into(), fans: vec![] },
         };
 
         let fans: Vec<Win32_Fan> = match wmi.query() {
             Ok(v) => v,
-            Err(_) => {
-                return CoolingInfo { overall: "unsupported".into(), fans: vec![] };
-            }
+            Err(_) => return CoolingInfo { overall: "unsupported".into(), fans: vec![] },
         };
 
         if fans.is_empty() {
@@ -495,13 +488,7 @@ mod platform {
         }
 
         let mapped: Vec<FanInfo> = fans.into_iter().enumerate().map(|(idx, fan)| {
-            let rpm = fan.DesiredSpeed.and_then(|v| {
-                if v == 0 || v > u32::MAX as u64 {
-                    None
-                } else {
-                    Some(v as u32)
-                }
-            });
+            let rpm = fan.DesiredSpeed.and_then(|v| if v == 0 || v > u32::MAX as u64 { None } else { Some(v as u32) });
             FanInfo {
                 name: fan.Name
                     .or(fan.DeviceID)
