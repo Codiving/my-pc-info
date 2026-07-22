@@ -26,6 +26,21 @@ function formatAllSpecs(data: HardwareInfo): string {
   if (data.ram) lines.push(`[RAM] ${data.ram.total_gb.toFixed(0)}GB ${data.ram.memory_type} ${data.ram.speed_mhz}MHz\n`);
   data.drives.forEach(d => lines.push(`[${d.letter}] ${d.label || "로컬 디스크"} ${d.drive_type} — ${d.free_gb.toFixed(0)}GB 여유 / ${d.total_gb.toFixed(0)}GB\n`));
   if (data.motherboard) lines.push(`[메인보드] ${data.motherboard.manufacturer} ${data.motherboard.model}\n`);
+  if (data.firmware) {
+    const secureBootLabel = data.firmware.secure_boot === "enabled"
+      ? "활성"
+      : data.firmware.secure_boot === "disabled"
+        ? "비활성"
+        : data.firmware.secure_boot === "unsupported"
+          ? "지원 안 됨"
+          : "감지 불가";
+    lines.push(`[보안] Secure Boot ${secureBootLabel}\n`);
+    if (data.firmware.tpm) {
+      lines.push(`[TPM] ${data.firmware.tpm.spec_version || "감지 불가"} / ${data.firmware.tpm.manufacturer_version || "감지 불가"}\n`);
+    } else {
+      lines.push(`[TPM] 지원 안 됨\n`);
+    }
+  }
   return lines.join("\n");
 }
 
@@ -225,6 +240,7 @@ export default function App() {
                     specs={cpu ? [
                       { label: "코어 / 스레드", value: `${cpu.cores}C / ${cpu.threads}T` },
                       { label: "최대 클럭", value: `${(cpu.max_clock_mhz / 1000).toFixed(1)} GHz` },
+                      { label: "가상화", value: cpu.virtualization ? "지원" : "미지원" },
                     ] : []}
                     copyText={cpu ? `[CPU] ${cpu.name} (${cpu.cores}코어/${cpu.threads}스레드 ${(cpu.max_clock_mhz / 1000).toFixed(1)}GHz)` : ""}
                   />

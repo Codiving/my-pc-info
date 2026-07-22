@@ -117,6 +117,22 @@ pub struct BatteryInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct TpmInfo {
+    pub is_enabled: Option<bool>,
+    pub is_activated: Option<bool>,
+    pub is_owned: Option<bool>,
+    pub spec_version: String,
+    pub manufacturer_version: String,
+    pub manufacturer_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct FirmwareInfo {
+    pub secure_boot: String,
+    pub tpm: Option<TpmInfo>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct HardwareInfo {
     pub cpu: Option<CpuInfo>,
     pub gpus: Vec<GpuInfo>,
@@ -126,6 +142,7 @@ pub struct HardwareInfo {
     pub os: Option<OsInfo>,
     pub network: Vec<NetworkInfo>,
     pub battery: Option<BatteryInfo>,
+    pub firmware: FirmwareInfo,
     pub is_laptop: bool,
     pub computer_name: String,
 }
@@ -136,6 +153,7 @@ pub struct HardwareInfo {
 mod platform {
     use super::*;
     use std::collections::HashMap;
+    use std::process::Command;
     use wmi::{COMLibrary, WMIConnection};
 
     #[allow(non_snake_case, non_camel_case_types)]
@@ -273,6 +291,17 @@ mod platform {
         EstimatedRunTime: Option<u32>,
     }
 
+    #[allow(non_snake_case, non_camel_case_types)]
+    #[derive(serde::Deserialize, Debug)]
+    struct Win32_Tpm {
+        IsEnabled_InitialValue: Option<bool>,
+        IsActivated_InitialValue: Option<bool>,
+        IsOwned_InitialValue: Option<bool>,
+        ManufacturerId: Option<u32>,
+        ManufacturerVersion: Option<String>,
+        SpecVersion: Option<String>,
+    }
+
     fn memory_type_name(code: u32) -> &'static str {
         match code {
             20 => "DDR", 21 => "DDR2", 24 => "DDR3", 26 => "DDR4", 34 => "DDR5", _ => "Unknown",
@@ -329,6 +358,60 @@ mod platform {
         let y = &dt[0..4]; let mo = &dt[4..6]; let d = &dt[6..8];
         let h = &dt[8..10]; let mi = &dt[10..12];
         format!("{y}-{mo}-{d} {h}:{mi}")
+    }
+
+    fn decode_tpm_manufacturer_id(value: u32) -> String {
+        if value == 0 {
+            return String::new();
+        }
+
+        let bytes = value.to_be_bytes();
+        let decoded = String::from_utf8_lossy(&bytes)
+            .replace('\0', "")
+            .trim()
+            .to_string();
+
+        if decoded.is_empty() { "Unknown".into() } else { decoded }
+    }
+
+    fn query_secure_boot_status() -> String {
+        let output = Command::new("powershell.exe")
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                r#"$ErrorActionPreference = 'Stop'; try { if (Confirm-SecureBootUEFI) { 'enabled' } else { 'disabled' } } catch { if ($_.Exception.Message -match 'Cmdlet not supported on this platform|not supported') { 'unsupported' } else { 'unknown' } }"#,
+            ])
+            .output();
+
+        match output {
+            Ok(out) if out.status.success() => {
+                let status = String::from_utf8_lossy(&out.stdout).trim().to_lowercase();
+                match status.as_str() {
+                    "enabled" | "disabled" | "unsupported" => status,
+                    _ => "unknown".into(),
+                }
+            }
+            _ => "unknown".into(),
+        }
+    }
+
+    fn query_tpm_info() -> Option<TpmInfo> {
+        let com_con = COMLibrary::new().ok()?;
+        let wmi = WMIConnection::with_namespace_path("root\\CIMV2\\Security\\MicrosoftTpm", com_con).ok()?;
+        let tpms: Vec<Win32_Tpm> = wmi.query().ok()?;
+        let tpm = tpms.into_iter().next()?;
+
+        Some(TpmInfo {
+            is_enabled: tpm.IsEnabled_InitialValue,
+            is_activated: tpm.IsActivated_InitialValue,
+            is_owned: tpm.IsOwned_InitialValue,
+            spec_version: tpm.SpecVersion.unwrap_or_default().trim().to_string(),
+            manufacturer_version: tpm.ManufacturerVersion.unwrap_or_default().trim().to_string(),
+            manufacturer_id: tpm.ManufacturerId.map(decode_tpm_manufacturer_id).unwrap_or_default(),
+        })
     }
 
     fn uptime_hours_from_boot(wmi_dt: &str) -> u64 {
@@ -573,7 +656,12 @@ mod platform {
             }
         });
 
-        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, is_laptop, computer_name })
+        let firmware = FirmwareInfo {
+            secure_boot: query_secure_boot_status(),
+            tpm: query_tpm_info(),
+        };
+
+        Ok(HardwareInfo { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware, is_laptop, computer_name })
     }
 
     /// ACPI 열영역에서 CPU/시스템 온도(℃)를 읽는다. root\WMI 네임스페이스가 필요하며

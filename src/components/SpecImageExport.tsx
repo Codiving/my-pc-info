@@ -37,6 +37,17 @@ function specRows(data: HardwareInfo): Array<[string, string]> {
     rows.push([`디스크 ${d.letter}`, `${d.drive_type} ${d.total_gb.toFixed(0)}GB (여유 ${d.free_gb.toFixed(0)}GB)`]);
   });
   if (data.motherboard) rows.push(["메인보드", `${data.motherboard.manufacturer} ${data.motherboard.model}`]);
+  if (data.firmware) {
+    const secureBootLabel = data.firmware.secure_boot === "enabled"
+      ? "활성"
+      : data.firmware.secure_boot === "disabled"
+        ? "비활성"
+        : data.firmware.secure_boot === "unsupported"
+          ? "지원 안 됨"
+          : "감지 불가";
+    rows.push(["Secure Boot", secureBootLabel]);
+    rows.push(["TPM", data.firmware.tpm ? (data.firmware.tpm.spec_version || "감지 불가") : "지원 안 됨"]);
+  }
   return rows;
 }
 

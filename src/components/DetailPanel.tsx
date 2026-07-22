@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Cpu, Monitor, Database, HardDrive, CircuitBoard, Globe, Wifi, Battery, ChevronDown } from "lucide-react";
+import { Cpu, Monitor, Database, HardDrive, CircuitBoard, Globe, Wifi, Battery, ShieldCheck, ChevronDown } from "lucide-react";
 import type { HardwareInfo } from "../types/hardware";
 import { cn } from "../utils/cn";
 
@@ -21,6 +21,21 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       {children}
     </div>
   );
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case "enabled":
+      return "활성";
+    case "disabled":
+      return "비활성";
+    case "supported":
+      return "지원됨";
+    case "unsupported":
+      return "지원 안 됨";
+    default:
+      return "감지 불가";
+  }
 }
 
 function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
@@ -57,7 +72,7 @@ function AccordionItem({ icon: Icon, label, children, open, onToggle }: {
 export function DetailPanel({ data }: { data: HardwareInfo }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
-  const { cpu, gpus, ram, drives, motherboard, os, network, battery } = data;
+  const { cpu, gpus, ram, drives, motherboard, os, network, battery, firmware } = data;
 
   const availableKeys = [
     cpu ? "cpu" : null,
@@ -68,6 +83,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
     os ? "os" : null,
     network.length > 0 ? "network" : null,
     battery ? "battery" : null,
+    firmware ? "firmware" : null,
   ].filter(Boolean) as string[];
 
   const allOpen = availableKeys.length > 0 && availableKeys.every((k) => openItems.has(k));
@@ -117,7 +133,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                 <Row label="기본 클럭" value={`${(cpu.base_clock_mhz / 1000).toFixed(2)} GHz`} />
                 <Row label="최대 클럭" value={`${(cpu.max_clock_mhz / 1000).toFixed(2)} GHz`} />
                 <Row label="아키텍처" value={cpu.architecture} />
-                <Row label="가상화" value={cpu.virtualization} />
+                <Row label="가상화" value={cpu.virtualization ? "지원" : "미지원"} />
                 <Row label="현재 사용률" value={`${cpu.usage_percent}%`} />
               </Section>
             </AccordionItem>
@@ -230,11 +246,34 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
             <AccordionItem icon={Battery} label="배터리" open={openItems.has("battery")} onToggle={() => toggleItem("battery")}>
               <Section title="배터리 상태">
                 <Row label="충전량" value={`${battery.charge_percent}%`} />
-                <Row label="충전 중" value={battery.is_charging} />
+                <Row label="충전 상태" value={battery.is_charging ? "충전 중" : "배터리 사용 중"} />
                 <Row label="배터리 건강도" value={battery.health_percent != null ? `${battery.health_percent}%` : null} />
                 <Row label="설계 용량" value={battery.design_capacity_mwh != null ? `${battery.design_capacity_mwh} mWh` : null} />
                 <Row label="현재 최대 용량" value={battery.full_capacity_mwh != null ? `${battery.full_capacity_mwh} mWh` : null} />
                 <Row label="예상 사용 시간" value={battery.estimated_minutes != null ? `${Math.floor(battery.estimated_minutes / 60)}시간 ${battery.estimated_minutes % 60}분` : null} />
+              </Section>
+            </AccordionItem>
+          )}
+
+          {firmware && (
+            <AccordionItem icon={ShieldCheck} label="보안 · 펌웨어" open={openItems.has("firmware")} onToggle={() => toggleItem("firmware")}>
+              <Section title="보안 상태">
+                <Row label="Secure Boot" value={statusLabel(firmware.secure_boot)} />
+              </Section>
+              <Section title="TPM">
+                {firmware.tpm ? (
+                  <>
+                    <Row label="탑재 여부" value="지원됨" />
+                    <Row label="활성화" value={firmware.tpm.is_enabled == null ? "감지 불가" : firmware.tpm.is_enabled ? "활성" : "비활성"} />
+                    <Row label="초기 활성" value={firmware.tpm.is_activated == null ? "감지 불가" : firmware.tpm.is_activated ? "활성" : "비활성"} />
+                    <Row label="소유권" value={firmware.tpm.is_owned == null ? "감지 불가" : firmware.tpm.is_owned ? "보유" : "미보유"} />
+                    <Row label="사양 버전" value={firmware.tpm.spec_version || "감지 불가"} />
+                    <Row label="제조사 버전" value={firmware.tpm.manufacturer_version || "감지 불가"} />
+                    <Row label="제조사 ID" value={firmware.tpm.manufacturer_id || "감지 불가"} />
+                  </>
+                ) : (
+                  <Row label="TPM" value="지원 안 됨" />
+                )}
               </Section>
             </AccordionItem>
           )}

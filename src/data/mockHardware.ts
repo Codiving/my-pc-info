@@ -191,6 +191,17 @@ export function getMockHardwareInfo(): HardwareInfo {
       full_capacity_mwh: 84600,
       estimated_minutes: 213,
     },
+    firmware: {
+      secure_boot: "enabled",
+      tpm: {
+        is_enabled: true,
+        is_activated: true,
+        is_owned: true,
+        spec_version: "2.0",
+        manufacturer_version: "5.63.3144.0",
+        manufacturer_id: "AMD",
+      },
+    },
     is_laptop: true,
     computer_name: "ROG-STRIX-G16",
   };

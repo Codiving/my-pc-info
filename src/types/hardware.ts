@@ -101,6 +101,23 @@ export interface BatteryInfo {
   estimated_minutes: number | null;
 }
 
+export type AvailabilityStatus = "supported" | "unsupported" | "unknown";
+export type ToggleStatus = "enabled" | "disabled" | "unsupported" | "unknown";
+
+export interface TpmInfo {
+  is_enabled: boolean | null;
+  is_activated: boolean | null;
+  is_owned: boolean | null;
+  spec_version: string;
+  manufacturer_version: string;
+  manufacturer_id: string;
+}
+
+export interface FirmwareInfo {
+  secure_boot: ToggleStatus;
+  tpm: TpmInfo | null;
+}
+
 // ─── Spec checker types ───────────────────────────────────────────────────────
 
 export interface SpecRequirement {
@@ -158,6 +175,7 @@ export interface HardwareInfo {
   os: OsInfo | null;
   network: NetworkInfo[];
   battery: BatteryInfo | null;
+  firmware: FirmwareInfo;
   is_laptop: boolean;
   computer_name: string;
 }
