@@ -284,6 +284,28 @@ mod platform {
 
     #[allow(non_snake_case, non_camel_case_types)]
     #[derive(serde::Deserialize, Debug)]
+    struct PowerShellDiskInfo {
+        number: u32,
+        friendly_name: String,
+        bus_type: String,
+        media_type: String,
+    }
+
+    #[allow(non_snake_case, non_camel_case_types)]
+    #[derive(serde::Deserialize, Debug)]
+    struct PowerShellDriveInfo {
+        letter: Option<String>,
+        disk_number: Option<u32>,
+        label: Option<String>,
+        total_gb: Option<f64>,
+        free_gb: Option<f64>,
+        used_percent: Option<u32>,
+        is_boot: Option<bool>,
+        file_system: Option<String>,
+    }
+
+    #[allow(non_snake_case, non_camel_case_types)]
+    #[derive(serde::Deserialize, Debug)]
     struct Win32_BaseBoard {
         Manufacturer: Option<String>,
         Product: Option<String>,
@@ -832,46 +854,160 @@ $results | ConvertTo-Json -Compress -Depth 4
 
         // ── Storage ────────────────────────────────────────────────────────────
         let phys_disks: Vec<Win32_DiskDrive> = wmi_con.query().unwrap_or_default();
-        let logical_disks: Vec<Win32_LogicalDisk> = wmi_con.query().unwrap_or_default();
+        let drive_script = r#"
+$ErrorActionPreference = 'Stop'
+$disks = @(Get-Disk | ForEach-Object {
+  [pscustomobject]@{
+    number = [uint32]$_.Number
+    friendly_name = if ($_.FriendlyName) { [string]$_.FriendlyName } else { "" }
+    bus_type = [string]$_.BusType
+    media_type = [string]$_.MediaType
+  }
+})
 
-        // Build disk index → type map from physical disks
-        let disk_type_map: Vec<String> = phys_disks.iter().map(|d| {
-            detect_disk_type(
-                d.Model.as_deref().unwrap_or(""),
-                d.InterfaceType.as_deref().unwrap_or(""),
-                d.MediaType.as_deref().unwrap_or(""),
-            )
-        }).collect();
-        let disk_model_map: Vec<String> = phys_disks.iter()
-            .map(|d| d.Model.as_deref().unwrap_or("Unknown").trim().to_string())
-            .collect();
-        let default_type = disk_type_map.first().cloned().unwrap_or_else(|| "알 수 없음".into());
-        let default_model = disk_model_map.first().cloned().unwrap_or_default();
+$results = @(Get-Partition | Where-Object { $_.DriveLetter } | ForEach-Object {
+  $partition = $_
+  $volume = $null
+  try {
+    $volume = Get-Volume -DriveLetter $partition.DriveLetter -ErrorAction Stop
+  } catch {
+    $volume = $null
+  }
 
-        let drives: Vec<DriveInfo> = logical_disks.into_iter()
-            .filter(|d| d.DriveType == Some(3))
-            .filter_map(|d| {
-                let letter = d.DeviceID?;
-                let total = d.Size.unwrap_or(0);
-                let free  = d.FreeSpace.unwrap_or(0);
-                let total_gb = total as f64 / (1u64 << 30) as f64;
-                let free_gb  = free  as f64 / (1u64 << 30) as f64;
-                let used_pct = if total > 0 { ((total - free) * 100 / total) as u32 } else { 0 };
-                let is_boot = letter.to_uppercase() == "C:";
-                Some(DriveInfo {
-                    letter,
-                    label: d.VolumeName.unwrap_or_default().trim().to_string(),
-                    total_gb, free_gb, used_percent: used_pct,
-                    drive_type: default_type.clone(),
-                    model: default_model.clone(),
-                    interface_type: phys_disks.first()
-                        .and_then(|p| p.InterfaceType.as_deref().map(str::to_string))
-                        .unwrap_or_default(),
-                    is_boot,
-                    file_system: d.FileSystem.unwrap_or_default(),
+  $disk = $disks | Where-Object { $_.number -eq $partition.DiskNumber } | Select-Object -First 1
+
+  $totalBytes = if ($volume -and $null -ne $volume.Size) { [double]$volume.Size } elseif ($null -ne $partition.Size) { [double]$partition.Size } else { 0 }
+  $freeBytes = if ($volume -and $null -ne $volume.SizeRemaining) { [double]$volume.SizeRemaining } else { 0 }
+
+  [pscustomobject]@{
+    letter = if ($partition.DriveLetter) { "$($partition.DriveLetter):" } else { "" }
+    disk_number = [uint32]$partition.DiskNumber
+    label = if ($volume -and $volume.FileSystemLabel) { [string]$volume.FileSystemLabel } else { "" }
+    total_gb = [math]::Round($totalBytes / 1GB, 1)
+    free_gb = [math]::Round($freeBytes / 1GB, 1)
+    used_percent = if ($totalBytes -gt 0) { [uint32](($totalBytes - $freeBytes) * 100 / $totalBytes) } else { 0 }
+    is_boot = [bool]$partition.IsBoot
+    file_system = if ($volume -and $volume.FileSystem) { [string]$volume.FileSystem } else { "" }
+    model = if ($disk -and $disk.friendly_name) { [string]$disk.friendly_name } else { "" }
+    interface_type = if ($disk -and $disk.bus_type) { [string]$disk.bus_type } else { "" }
+  }
+})
+
+$results | ConvertTo-Json -Compress -Depth 4
+"#;
+
+        let drive_output = Command::new("powershell.exe")
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                drive_script,
+            ])
+            .output();
+
+        let drives: Vec<DriveInfo> = match drive_output {
+            Ok(out) if out.status.success() => {
+                let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if stdout.is_empty() {
+                    Vec::new()
+                } else {
+                    let parsed: Vec<PowerShellDriveInfo> = serde_json::from_str(&stdout).unwrap_or_default();
+                    let disk_info: HashMap<u32, PowerShellDiskInfo> = phys_disks
+                        .iter()
+                        .enumerate()
+                        .map(|(idx, d)| {
+                            let number = d.Index.unwrap_or(idx as u32);
+                            (
+                                number,
+                                PowerShellDiskInfo {
+                                    number,
+                                    friendly_name: d.Model.as_deref().unwrap_or("Unknown").trim().to_string(),
+                                    bus_type: d.InterfaceType.as_deref().unwrap_or("").trim().to_string(),
+                                    media_type: d.MediaType.as_deref().unwrap_or("").trim().to_string(),
+                                },
+                            )
+                        })
+                        .collect();
+
+                    parsed.into_iter().map(|d| {
+                        let disk_number = d.disk_number.unwrap_or(0);
+                        let disk = disk_info.get(&disk_number);
+                        let model = d.model.unwrap_or_default().trim().to_string();
+                        let interface_type = d.interface_type.unwrap_or_default().trim().to_string();
+                        let raw_bus = disk
+                            .and_then(|x| x.bus_type.as_deref())
+                            .or(Some(interface_type.as_str()))
+                            .unwrap_or("");
+                        let raw_media = disk.and_then(|x| x.media_type.as_deref()).unwrap_or("");
+                        let drive_type = detect_disk_type(&model, raw_bus, raw_media);
+                        DriveInfo {
+                            letter: d.letter.unwrap_or_default().trim().to_string(),
+                            label: d.label.unwrap_or_default().trim().to_string(),
+                            total_gb: d.total_gb.unwrap_or(0.0),
+                            free_gb: d.free_gb.unwrap_or(0.0),
+                            used_percent: d.used_percent.unwrap_or(0),
+                            drive_type,
+                            model,
+                            interface_type: if interface_type.is_empty() {
+                                disk.and_then(|x| x.bus_type.clone()).unwrap_or_default()
+                            } else {
+                                interface_type
+                            },
+                            is_boot: d.is_boot.unwrap_or(false),
+                            file_system: d.file_system.unwrap_or_default().trim().to_string(),
+                        }
+                    }).collect()
+                }
+            }
+            _ => Vec::new(),
+        };
+
+        let drives = if drives.is_empty() {
+            let logical_disks: Vec<Win32_LogicalDisk> = wmi_con.query().unwrap_or_default();
+
+            let default_type = phys_disks.first().map(|d| {
+                detect_disk_type(
+                    d.Model.as_deref().unwrap_or(""),
+                    d.InterfaceType.as_deref().unwrap_or(""),
+                    d.MediaType.as_deref().unwrap_or(""),
+                )
+            }).unwrap_or_else(|| "알 수 없음".into());
+            let default_model = phys_disks.first()
+                .and_then(|d| d.Model.as_deref())
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+            let default_interface = phys_disks.first()
+                .and_then(|p| p.InterfaceType.as_deref().map(str::to_string))
+                .unwrap_or_default();
+
+            logical_disks.into_iter()
+                .filter(|d| d.DriveType == Some(3))
+                .filter_map(|d| {
+                    let letter = d.DeviceID?;
+                    let total = d.Size.unwrap_or(0);
+                    let free  = d.FreeSpace.unwrap_or(0);
+                    let total_gb = total as f64 / (1u64 << 30) as f64;
+                    let free_gb  = free  as f64 / (1u64 << 30) as f64;
+                    let used_pct = if total > 0 { ((total - free) * 100 / total) as u32 } else { 0 };
+                    let is_boot = letter.to_uppercase() == "C:";
+                    Some(DriveInfo {
+                        letter,
+                        label: d.VolumeName.unwrap_or_default().trim().to_string(),
+                        total_gb, free_gb, used_percent: used_pct,
+                        drive_type: default_type.clone(),
+                        model: default_model.clone(),
+                        interface_type: default_interface.clone(),
+                        is_boot,
+                        file_system: d.FileSystem.unwrap_or_default(),
+                    })
                 })
-            })
-            .collect();
+                .collect()
+        } else {
+            drives
+        };
 
         // ── Motherboard / BIOS ─────────────────────────────────────────────────
         let boards: Vec<Win32_BaseBoard> = wmi_con.query().unwrap_or_default();
