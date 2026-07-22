@@ -18,40 +18,100 @@ import type { HardwareInfo } from "./types/hardware";
 
 const logoImg = "/logo.png";
 
+function formatUptime(hours: number): string {
+  if (hours >= 24) {
+    return `${Math.floor(hours / 24)}일 ${hours % 24}시간`;
+  }
+  return `${hours}시간`;
+}
+
+function formatBatteryRuntime(minutes: number | null | undefined): string {
+  if (minutes == null) return "감지 불가";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}시간 ${mins}분`;
+}
+
+function secureBootLabel(status: string): string {
+  switch (status) {
+    case "enabled":
+      return "활성";
+    case "disabled":
+      return "비활성";
+    case "unsupported":
+      return "지원 안 됨";
+    default:
+      return "감지 불가";
+  }
+}
+
+function smartHealthLabel(status: string): string {
+  switch (status) {
+    case "healthy":
+      return "정상";
+    case "warning":
+      return "주의";
+    case "unhealthy":
+      return "불량";
+    case "unsupported":
+      return "지원 안 됨";
+    default:
+      return "감지 불가";
+  }
+}
+
+function coolingLabel(status: string): string {
+  switch (status) {
+    case "supported":
+      return "지원됨";
+    case "unsupported":
+      return "지원 안 됨";
+    default:
+      return "감지 불가";
+  }
+}
+
 function formatAllSpecs(data: HardwareInfo): string {
   const lines: string[] = [`=== 내 PC 사양 (${data.computer_name}) ===\n`];
-  if (data.os) lines.push(`[OS] ${data.os.name} ${data.os.architecture} (빌드 ${data.os.build})\n`);
-  if (data.cpu) lines.push(`[CPU] ${data.cpu.name}\n  ${data.cpu.cores}코어 ${data.cpu.threads}스레드 / 최대 ${(data.cpu.max_clock_mhz / 1000).toFixed(1)}GHz\n`);
+  if (data.os) {
+    lines.push(`[OS] ${data.os.name} ${data.os.version} (빌드 ${data.os.build}) / ${data.os.architecture}\n`);
+    lines.push(`  설치일 ${data.os.install_date || "감지 불가"} · 마지막 부팅 ${data.os.last_boot || "감지 불가"} · 가동 ${formatUptime(data.os.uptime_hours)}\n`);
+  }
+  if (data.motherboard) {
+    lines.push(`[메인보드] ${data.motherboard.manufacturer} ${data.motherboard.model}\n  BIOS ${data.motherboard.bios_version || "감지 불가"}${data.motherboard.bios_date ? ` / ${data.motherboard.bios_date}` : ""}\n`);
+  }
+  if (data.cpu) lines.push(`[CPU] ${data.cpu.name}\n  ${data.cpu.cores}코어 ${data.cpu.threads}스레드 / 기본 ${(data.cpu.base_clock_mhz / 1000).toFixed(1)}GHz · 최대 ${(data.cpu.max_clock_mhz / 1000).toFixed(1)}GHz\n`);
   if (data.gpus.length > 0) lines.push(`[GPU] ${data.gpus.map(g => `${g.name}${g.vram_gb != null ? ` (${g.vram_gb.toFixed(0)}GB)` : ""}`).join(", ")}\n`);
   if (data.ram) lines.push(`[RAM] ${data.ram.total_gb.toFixed(0)}GB ${data.ram.memory_type} ${data.ram.speed_mhz}MHz\n`);
   data.drives.forEach(d => lines.push(`[${d.letter}] ${d.label || "로컬 디스크"} ${d.drive_type} — ${d.free_gb.toFixed(0)}GB 여유 / ${d.total_gb.toFixed(0)}GB\n`));
-  if (data.motherboard) lines.push(`[메인보드] ${data.motherboard.manufacturer} ${data.motherboard.model}\n`);
+  if (data.network.length > 0) {
+    data.network.forEach((n) => {
+      lines.push(`[네트워크] ${n.connection_name || n.name} — ${n.is_connected ? "연결됨" : "연결 안 됨"} / ${n.ip_address || "IP 감지 불가"}${n.speed_mbps != null ? ` / ${n.speed_mbps} Mbps` : ""}\n`);
+    });
+  }
+  if (data.battery) {
+    lines.push(`[배터리] ${data.battery.charge_percent}%${data.battery.is_charging ? " · 충전 중" : ""}${data.battery.health_percent != null ? ` · 건강도 ${data.battery.health_percent}%` : ""}${data.battery.estimated_minutes != null ? ` · 예상 ${formatBatteryRuntime(data.battery.estimated_minutes)}` : ""}\n`);
+  }
   if (data.firmware) {
-    const secureBootLabel = data.firmware.secure_boot === "enabled"
-      ? "활성"
-      : data.firmware.secure_boot === "disabled"
-        ? "비활성"
-        : data.firmware.secure_boot === "unsupported"
-          ? "지원 안 됨"
-          : "감지 불가";
-    lines.push(`[보안] Secure Boot ${secureBootLabel}\n`);
+    lines.push(`[보안] Secure Boot ${secureBootLabel(data.firmware.secure_boot)}\n`);
     if (data.firmware.tpm) {
-      lines.push(`[TPM] ${data.firmware.tpm.spec_version || "감지 불가"} / ${data.firmware.tpm.manufacturer_version || "감지 불가"}\n`);
+      lines.push(`[TPM] ${data.firmware.tpm.spec_version || "감지 불가"} / ${data.firmware.tpm.manufacturer_version || "감지 불가"}${data.firmware.tpm.manufacturer_id ? ` / ${data.firmware.tpm.manufacturer_id}` : ""}\n`);
     } else {
       lines.push(`[TPM] 지원 안 됨\n`);
     }
   }
   if (data.storage_health) {
-    const smartLabel = data.storage_health.overall === "healthy"
-      ? "정상"
-      : data.storage_health.overall === "warning"
-        ? "주의"
-        : data.storage_health.overall === "unhealthy"
-          ? "불량"
-          : data.storage_health.overall === "unsupported"
-            ? "지원 안 됨"
-            : "감지 불가";
-    lines.push(`[SMART] 전체 상태 ${smartLabel}\n`);
+    lines.push(`[SMART] 전체 상태 ${smartHealthLabel(data.storage_health.overall)}\n`);
+    data.storage_health.disks.forEach((disk) => {
+      lines.push(`  - ${disk.name}: ${smartHealthLabel(disk.health_status)}${disk.temperature_c != null ? ` / ${disk.temperature_c.toFixed(0)}°C` : ""}${disk.wear != null ? ` / Wear ${disk.wear}` : ""}\n`);
+    });
+  }
+  if (data.cooling) {
+    const fanCount = data.cooling.fans.length;
+    lines.push(`[냉각] ${coolingLabel(data.cooling.overall)}${fanCount > 0 ? ` · 팬 ${fanCount}개` : ""}\n`);
+    data.cooling.fans.forEach((fan) => {
+      lines.push(`  - ${fan.name}${fan.rpm != null ? ` / ${fan.rpm} RPM` : ""}${fan.variable_speed != null ? ` / 가변 속도 ${fan.variable_speed ? "지원" : "미지원"}` : ""}${fan.active_cooling != null ? ` / 능동 냉각 ${fan.active_cooling ? "지원" : "미지원"}` : ""}\n`);
+    });
   }
   return lines.join("\n");
 }
@@ -182,8 +242,8 @@ export default function App() {
               disabled={!data}
               title="전체 사양 복사"
             >
-              {copied ? <><Check size={14} /> 복사됨</> : <><Copy size={14} /> 전체 복사</>}
-            </button>
+                {copied ? <><Check size={14} /> 복사됨</> : <><Copy size={14} /> 전체 복사</>}
+              </button>
             {data && <SpecImageExport data={data} theme={theme} />}
             </>
           )}
@@ -242,7 +302,7 @@ export default function App() {
             {activeTab === "specs" && (
               <>
                 <LiveMonitor enabled={liveEnabled} onToggle={setLiveEnabled} />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 min-[900px]:grid-cols-2 gap-4">
                   <HardwareCard
                     Icon={Cpu}
                     title="CPU"

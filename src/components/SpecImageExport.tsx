@@ -27,8 +27,9 @@ const PALETTES: Record<Theme, Palette> = {
 
 function specRows(data: HardwareInfo): Array<[string, string]> {
   const rows: Array<[string, string]> = [];
-  if (data.os) rows.push(["OS", `${data.os.name} (${data.os.architecture}, 빌드 ${data.os.build})`]);
-  if (data.cpu) rows.push(["CPU", `${data.cpu.name}  ·  ${data.cpu.cores}코어 ${data.cpu.threads}스레드`]);
+  if (data.os) rows.push(["OS", `${data.os.name} ${data.os.version} (빌드 ${data.os.build}, ${data.os.architecture})`]);
+  if (data.motherboard) rows.push(["메인보드", `${data.motherboard.manufacturer} ${data.motherboard.model}`]);
+  if (data.cpu) rows.push(["CPU", `${data.cpu.name}  ·  ${data.cpu.cores}코어 ${data.cpu.threads}스레드 · 최대 ${(data.cpu.max_clock_mhz / 1000).toFixed(1)}GHz`]);
   if (data.gpus.length > 0) {
     rows.push(["GPU", data.gpus.map((g) => `${g.name}${g.vram_gb != null ? ` (${g.vram_gb.toFixed(0)}GB)` : ""}`).join(" / ")]);
   }
@@ -36,7 +37,15 @@ function specRows(data: HardwareInfo): Array<[string, string]> {
   data.drives.forEach((d) => {
     rows.push([`디스크 ${d.letter}`, `${d.drive_type} ${d.total_gb.toFixed(0)}GB (여유 ${d.free_gb.toFixed(0)}GB)`]);
   });
-  if (data.motherboard) rows.push(["메인보드", `${data.motherboard.manufacturer} ${data.motherboard.model}`]);
+  if (data.network.length > 0) {
+    const active = data.network.find((n) => n.is_connected) ?? data.network[0];
+    if (active) {
+      rows.push(["네트워크", `${active.connection_name || active.name}${active.is_connected ? " · 연결됨" : ""}${active.ip_address ? ` · ${active.ip_address}` : ""}${active.speed_mbps != null ? ` · ${active.speed_mbps} Mbps` : ""}`]);
+    }
+  }
+  if (data.battery) {
+    rows.push(["배터리", `${data.battery.charge_percent}%${data.battery.health_percent != null ? ` · 건강도 ${data.battery.health_percent}%` : ""}${data.battery.is_charging ? " · 충전 중" : ""}`]);
+  }
   if (data.firmware) {
     const secureBootLabel = data.firmware.secure_boot === "enabled"
       ? "활성"
@@ -59,6 +68,12 @@ function specRows(data: HardwareInfo): Array<[string, string]> {
             ? "지원 안 됨"
             : "감지 불가";
     rows.push(["SMART", smartLabel]);
+    if (data.storage_health.disks.length > 0) {
+      rows.push(["SMART 디스크", data.storage_health.disks.map((d) => `${d.name}:${d.health_status}`).join(" / ")]);
+    }
+  }
+  if (data.cooling) {
+    rows.push(["냉각", `${data.cooling.overall}${data.cooling.fans.length > 0 ? ` · 팬 ${data.cooling.fans.length}개` : ""}`]);
   }
   return rows;
 }

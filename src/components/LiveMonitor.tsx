@@ -1,4 +1,4 @@
-import { Activity, Cpu, Database, Thermometer } from "lucide-react";
+import { Activity, Cpu, Database, Thermometer, Timer } from "lucide-react";
 import { useLiveMetrics } from "../hooks/useLiveMetrics";
 import { cn } from "../utils/cn";
 
@@ -103,7 +103,7 @@ export function LiveMonitor({ enabled, onToggle }: { enabled: boolean; onToggle:
       </div>
 
       {enabled && (
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
           <Gauge
             icon={Cpu}
             label="CPU 사용률"
@@ -111,6 +111,15 @@ export function LiveMonitor({ enabled, onToggle }: { enabled: boolean; onToggle:
             unit="%"
             series={history.cpu}
             color="var(--color-blue)"
+          />
+          <Gauge
+            icon={Timer}
+            label="CPU 클럭"
+            value={metrics ? `${metrics.cpu_clock_mhz}` : "—"}
+            unit="MHz"
+            series={history.clock}
+            color="var(--color-muted)"
+            max={6000}
           />
           <Gauge
             icon={Database}

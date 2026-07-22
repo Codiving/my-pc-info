@@ -4,7 +4,7 @@ import type { HardwareInfo } from "../types/hardware";
 import { cn } from "../utils/cn";
 
 function Row({ label, value }: { label: string; value: string | number | boolean | null | undefined }) {
-  if (value == null || value === "" || value === 0) return null;
+  if (value == null || value === "") return null;
   const display = typeof value === "boolean" ? (value ? "지원" : "미지원") : String(value);
   return (
     <div className="flex justify-between items-center py-[7px] border-b border-edge/50 last:border-b-0">
@@ -177,7 +177,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                   <Row label="VRAM" value={gpu.vram_gb != null ? `${gpu.vram_gb.toFixed(0)} GB` : null} />
                   <Row label="드라이버" value={gpu.driver_version} />
                   <Row label="해상도" value={gpu.resolution} />
-                  <Row label="주사율" value={gpu.refresh_rate ? `${gpu.refresh_rate} Hz` : null} />
+                  <Row label="주사율" value={gpu.refresh_rate != null ? `${gpu.refresh_rate} Hz` : null} />
                 </Section>
               ))}
             </AccordionItem>
@@ -249,19 +249,6 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
             </AccordionItem>
           )}
 
-          {motherboard && (
-            <AccordionItem icon={CircuitBoard} label="메인보드 · BIOS" open={openItems.has("motherboard")} onToggle={() => toggleItem("motherboard")}>
-              <Section title="메인보드">
-                <Row label="제조사" value={motherboard.manufacturer} />
-                <Row label="모델명" value={motherboard.model} />
-              </Section>
-              <Section title="BIOS">
-                <Row label="버전" value={motherboard.bios_version} />
-                <Row label="날짜" value={motherboard.bios_date} />
-              </Section>
-            </AccordionItem>
-          )}
-
           {os && (
             <AccordionItem icon={Globe} label="운영체제" open={openItems.has("os")} onToggle={() => toggleItem("os")}>
               <Section title="시스템">
@@ -272,35 +259,7 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                 <Row label="아키텍처" value={os.architecture} />
                 <Row label="설치일" value={os.install_date} />
                 <Row label="마지막 부팅" value={os.last_boot} />
-                <Row label="가동 시간" value={os.uptime_hours ? `${os.uptime_hours}시간` : null} />
-              </Section>
-            </AccordionItem>
-          )}
-
-          {network.length > 0 && (
-            <AccordionItem icon={Wifi} label="네트워크" open={openItems.has("network")} onToggle={() => toggleItem("network")}>
-              {network.map((n, i) => (
-                <Section key={i} title={n.connection_name || n.name}>
-                  <Row label="어댑터" value={n.name} />
-                  <Row label="종류" value={n.adapter_type} />
-                  <Row label="상태" value={n.is_connected ? "연결됨" : "연결 안 됨"} />
-                  <Row label="IP 주소" value={n.ip_address} />
-                  <Row label="MAC 주소" value={n.mac_address} />
-                  <Row label="링크 속도" value={n.speed_mbps != null ? `${n.speed_mbps} Mbps` : null} />
-                </Section>
-              ))}
-            </AccordionItem>
-          )}
-
-          {battery && (
-            <AccordionItem icon={Battery} label="배터리" open={openItems.has("battery")} onToggle={() => toggleItem("battery")}>
-              <Section title="배터리 상태">
-                <Row label="충전량" value={`${battery.charge_percent}%`} />
-                <Row label="충전 상태" value={battery.is_charging ? "충전 중" : "배터리 사용 중"} />
-                <Row label="배터리 건강도" value={battery.health_percent != null ? `${battery.health_percent}%` : null} />
-                <Row label="설계 용량" value={battery.design_capacity_mwh != null ? `${battery.design_capacity_mwh} mWh` : null} />
-                <Row label="현재 최대 용량" value={battery.full_capacity_mwh != null ? `${battery.full_capacity_mwh} mWh` : null} />
-                <Row label="예상 사용 시간" value={battery.estimated_minutes != null ? `${Math.floor(battery.estimated_minutes / 60)}시간 ${battery.estimated_minutes % 60}분` : null} />
+                <Row label="가동 시간" value={`${os.uptime_hours}시간`} />
               </Section>
             </AccordionItem>
           )}
@@ -325,6 +284,47 @@ export function DetailPanel({ data }: { data: HardwareInfo }) {
                   <Row label="TPM" value="지원 안 됨" />
                 )}
               </Section>
+            </AccordionItem>
+          )}
+
+          {motherboard && (
+            <AccordionItem icon={CircuitBoard} label="메인보드 · BIOS" open={openItems.has("motherboard")} onToggle={() => toggleItem("motherboard")}>
+              <Section title="메인보드">
+                <Row label="제조사" value={motherboard.manufacturer} />
+                <Row label="모델명" value={motherboard.model} />
+              </Section>
+              <Section title="BIOS">
+                <Row label="버전" value={motherboard.bios_version} />
+                <Row label="날짜" value={motherboard.bios_date} />
+              </Section>
+            </AccordionItem>
+          )}
+
+          {battery && (
+            <AccordionItem icon={Battery} label="배터리" open={openItems.has("battery")} onToggle={() => toggleItem("battery")}>
+              <Section title="배터리 상태">
+                <Row label="충전량" value={`${battery.charge_percent}%`} />
+                <Row label="충전 상태" value={battery.is_charging ? "충전 중" : "배터리 사용 중"} />
+                <Row label="배터리 건강도" value={battery.health_percent != null ? `${battery.health_percent}%` : null} />
+                <Row label="설계 용량" value={battery.design_capacity_mwh != null ? `${battery.design_capacity_mwh} mWh` : null} />
+                <Row label="현재 최대 용량" value={battery.full_capacity_mwh != null ? `${battery.full_capacity_mwh} mWh` : null} />
+                <Row label="예상 사용 시간" value={battery.estimated_minutes != null ? `${Math.floor(battery.estimated_minutes / 60)}시간 ${battery.estimated_minutes % 60}분` : null} />
+              </Section>
+            </AccordionItem>
+          )}
+
+          {network.length > 0 && (
+            <AccordionItem icon={Wifi} label="네트워크" open={openItems.has("network")} onToggle={() => toggleItem("network")}>
+              {network.map((n, i) => (
+                <Section key={i} title={n.connection_name || n.name}>
+                  <Row label="어댑터" value={n.name} />
+                  <Row label="종류" value={n.adapter_type} />
+                  <Row label="상태" value={n.is_connected ? "연결됨" : "연결 안 됨"} />
+                  <Row label="IP 주소" value={n.ip_address} />
+                  <Row label="MAC 주소" value={n.mac_address} />
+                  <Row label="링크 속도" value={n.speed_mbps != null ? `${n.speed_mbps} Mbps` : null} />
+                </Section>
+              ))}
             </AccordionItem>
           )}
 

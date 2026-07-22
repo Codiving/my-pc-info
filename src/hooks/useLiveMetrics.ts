@@ -7,6 +7,7 @@ const HISTORY_LEN = 40; // 미니 그래프에 유지할 표본 수
 
 export interface MetricsHistory {
   cpu: number[];
+  clock: number[];
   ram: number[];
   temp: number[];
 }
@@ -17,7 +18,7 @@ export interface MetricsHistory {
  */
 export function useLiveMetrics(enabled: boolean, intervalMs = 2000) {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
-  const [history, setHistory] = useState<MetricsHistory>({ cpu: [], ram: [], temp: [] });
+  const [history, setHistory] = useState<MetricsHistory>({ cpu: [], clock: [], ram: [], temp: [] });
   const inFlight = useRef(false);
 
   const poll = useCallback(async () => {
@@ -35,6 +36,7 @@ export function useLiveMetrics(enabled: boolean, intervalMs = 2000) {
       setMetrics(m);
       setHistory((prev) => ({
         cpu: [...prev.cpu, m.cpu_usage_percent].slice(-HISTORY_LEN),
+        clock: [...prev.clock, m.cpu_clock_mhz].slice(-HISTORY_LEN),
         ram: [...prev.ram, m.ram_usage_percent].slice(-HISTORY_LEN),
         temp: [...prev.temp, m.cpu_temp_c ?? NaN].slice(-HISTORY_LEN),
       }));
@@ -54,7 +56,7 @@ export function useLiveMetrics(enabled: boolean, intervalMs = 2000) {
 
   // 모니터링을 끄면 히스토리를 초기화해 다음에 깨끗하게 시작.
   useEffect(() => {
-    if (!enabled) setHistory({ cpu: [], ram: [], temp: [] });
+    if (!enabled) setHistory({ cpu: [], clock: [], ram: [], temp: [] });
   }, [enabled]);
 
   return { metrics, history };
