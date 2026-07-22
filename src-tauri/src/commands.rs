@@ -306,6 +306,8 @@ mod platform {
         used_percent: Option<u32>,
         is_boot: Option<bool>,
         file_system: Option<String>,
+        model: Option<String>,
+        interface_type: Option<String>,
     }
 
     #[allow(non_snake_case, non_camel_case_types)]
@@ -1033,10 +1035,10 @@ $results | ConvertTo-Json -Compress -Depth 4
                         let model = d.model.unwrap_or_default().trim().to_string();
                         let interface_type = d.interface_type.unwrap_or_default().trim().to_string();
                         let raw_bus = disk
-                            .and_then(|x| x.bus_type.as_deref())
+                            .map(|x| x.bus_type.as_str())
                             .or(Some(interface_type.as_str()))
                             .unwrap_or("");
-                        let raw_media = disk.and_then(|x| x.media_type.as_deref()).unwrap_or("");
+                        let raw_media = disk.map(|x| x.media_type.as_str()).unwrap_or("");
                         let drive_type = detect_disk_type(&model, raw_bus, raw_media);
                         DriveInfo {
                             letter: d.letter.unwrap_or_default().trim().to_string(),
@@ -1047,7 +1049,7 @@ $results | ConvertTo-Json -Compress -Depth 4
                             drive_type,
                             model,
                             interface_type: if interface_type.is_empty() {
-                                disk.and_then(|x| x.bus_type.clone()).unwrap_or_default()
+                                disk.map(|x| x.bus_type.clone()).unwrap_or_default()
                             } else {
                                 interface_type
                             },
